@@ -38,6 +38,12 @@ impl Radio for TestRadio {
     }
 
     async fn notify(&self, chunk: Vec<u8>) -> anyhow::Result<()> {
+        // Real stacks truncate attribute values beyond 512 bytes (found in M6).
+        assert!(
+            chunk.len() <= 512,
+            "{}-byte notification would be truncated",
+            chunk.len()
+        );
         let _ = self.notes.send(chunk);
         Ok(())
     }
@@ -73,6 +79,10 @@ fn timers() -> Timers {
 }
 
 async fn start() -> Harness {
+    start_with(SimWifi::default()).await
+}
+
+async fn start_with(wifi: SimWifi) -> Harness {
     let _ = tracing_subscriber::fmt()
         .with_test_writer()
         .with_env_filter("info")
@@ -80,7 +90,7 @@ async fn start() -> Harness {
     let key = KeyPair::generate().unwrap();
     let device_public = *key.public_key();
     let id = device_id(&device_public);
-    let wifi = Arc::new(SimWifi::default());
+    let wifi = Arc::new(wifi);
     let log = Arc::new(Mutex::new(RadioLog::default()));
     let (events_tx, events_rx) = unbounded_channel();
     let (notes_tx, notes_rx) = unbounded_channel();
@@ -311,6 +321,20 @@ async fn happy_path_provisions_and_stops_advertising() {
     settle().await;
     assert!(h.disconnected(&p), "device disconnects after ack");
     assert!(!h.advertising(), "provisioned device stays quiet");
+}
+
+#[tokio::test(start_paused = true)]
+async fn large_replies_fit_the_att_value_limit() {
+    // Regression (M6): at MTU 517 the device sent 514-byte notifications,
+    // which BlueZ/Chrome truncate to 512, corrupting multi-chunk messages.
+    let mut h = start_with(SimWifi::crowded()).await;
+    let mut p = h.phone(1, 517);
+    p.handshake(&mut h).await;
+    p.send(&PhoneMsg::Scan);
+    let DeviceMsg::Networks { list } = p.recv_msg(&mut h).await else {
+        panic!()
+    };
+    assert_eq!(list.len(), 20);
 }
 
 #[tokio::test(start_paused = true)]

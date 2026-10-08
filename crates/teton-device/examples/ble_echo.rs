@@ -15,7 +15,7 @@ use anyhow::Result;
 use clap::Parser;
 use teton_device::ble::{Inbound, Peripheral};
 use teton_device::identity;
-use teton_proto::frame::{Reassembler, chunk};
+use teton_proto::frame::{Reassembler, chunk, chunk_len_for_mtu};
 use teton_proto::hex;
 use teton_proto::label::format_id;
 use tracing::{info, warn};
@@ -93,11 +93,11 @@ async fn main() -> Result<()> {
                 } else {
                     [b"echo:".as_slice(), &msg].concat()
                 };
-                let chunks = chunk(&reply, usize::from(mtu) - 3)?;
+                let chunks = chunk(&reply, chunk_len_for_mtu(mtu))?;
                 info!(
                     len = reply.len(),
                     chunks = chunks.len(),
-                    chunk_len = usize::from(mtu) - 3,
+                    chunk_len = chunk_len_for_mtu(mtu),
                     "replying"
                 );
                 for c in chunks {

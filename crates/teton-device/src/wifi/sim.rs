@@ -42,6 +42,18 @@ impl Default for SimWifi {
 }
 
 impl SimWifi {
+    /// Twenty long-named networks, like a real scan in a building: the
+    /// `networks` reply then spans several full-size BLE chunks.
+    pub fn crowded() -> Self {
+        let mut sim = Self::default();
+        sim.networks.extend((0..15).map(|i| Network {
+            ssid: format!("Neighbour-Network-With-A-Long-Name-{i:02}"),
+            signal: 30 - i,
+            sec: Security::Wpa2,
+        }));
+        sim
+    }
+
     /// Simulates the provisioned network going away or coming back.
     pub fn set_online(&self, online: bool) {
         self.state.lock().expect("lock").online = online;

@@ -142,8 +142,9 @@ bytes 1..  : payload
 - Maximum message size **4096 bytes**. Chunk index must start at 0 and increase by 1,
   wrapping 127 → 0 (with 20-byte chunks a 4096-byte message needs 216 chunks).
   Any violation causes a protocol error and the session ends.
-- Chunk size: the device uses `MTU − 3`. The phone uses 20 bytes until it receives
-  `mtu` in the challenge, then `min(mtu − 3, 512)`.
+- Chunk size: `min(MTU − 3, 512)` in both directions; ATT caps attribute values at
+  512 bytes, and larger notifications are silently truncated (found in M6 at MTU 517).
+  The phone uses 20 bytes until it receives `mtu` in the challenge.
 - No interleaving: each direction has at most one message in flight.
 
 ### 4.2 Message envelope

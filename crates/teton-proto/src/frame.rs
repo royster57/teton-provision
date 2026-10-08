@@ -7,6 +7,16 @@
 /// Largest reassembled message accepted from the peer.
 pub const MAX_MESSAGE_LEN: usize = 4096;
 
+/// ATT caps an attribute value at 512 bytes regardless of MTU; larger
+/// notifications are silently truncated.
+pub const MAX_ATTRIBUTE_LEN: usize = 512;
+
+/// Chunk size (header included) for a link with the given ATT MTU:
+/// `min(MTU − 3, 512)`, never below the 23-byte minimum MTU.
+pub fn chunk_len_for_mtu(mtu: u16) -> usize {
+    (usize::from(mtu.max(23)) - 3).min(MAX_ATTRIBUTE_LEN)
+}
+
 const FINAL: u8 = 0x80;
 const INDEX_MASK: u8 = 0x7f;
 
@@ -138,6 +148,18 @@ mod tests {
             chunks.remove(i);
             prop_assert!(reassemble(&chunks).is_err());
         }
+    }
+
+    #[test]
+    fn chunk_len_respects_att_limits() {
+        assert_eq!(chunk_len_for_mtu(23), 20);
+        assert_eq!(chunk_len_for_mtu(185), 182);
+        assert_eq!(
+            chunk_len_for_mtu(517),
+            512,
+            "MTU 517 must not produce 514-byte values"
+        );
+        assert_eq!(chunk_len_for_mtu(0), 20);
     }
 
     #[test]

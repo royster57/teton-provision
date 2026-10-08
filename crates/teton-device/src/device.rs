@@ -8,7 +8,7 @@ use std::time::Duration;
 
 use bluer::Address;
 use teton_proto::crypto::KeyPair;
-use teton_proto::frame::{Reassembler, chunk};
+use teton_proto::frame::{Reassembler, chunk, chunk_len_for_mtu};
 use teton_proto::msg::{self, DeviceOuter, DeviceState, ErrorCode};
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender, unbounded_channel};
 use tokio::time::{Instant, MissedTickBehavior, interval};
@@ -283,7 +283,7 @@ impl<W: WifiBackend, R: Radio> Device<W, R> {
     /// Chunks a message to the session's MTU and notifies it.
     async fn send(&self, m: &[u8]) {
         let Some(a) = &self.session else { return };
-        let chunks = match chunk(m, usize::from(a.mtu.max(23)) - 3) {
+        let chunks = match chunk(m, chunk_len_for_mtu(a.mtu)) {
             Ok(c) => c,
             Err(e) => return warn!(error = %e, "cannot chunk outgoing message"),
         };
