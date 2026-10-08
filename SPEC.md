@@ -529,17 +529,22 @@ Web Bluetooth ("Open this page in Chrome").
 `~/.local/state/teton-demo/autoconnect.txt`, set them to `no`, disconnect
 `wlp0s20f3`. `scripts/demo-restore`: re-enable exactly those profiles. Nothing is deleted.
 
-`scripts/demo-run.sh` (run by you, since the laptop is offline until provisioning succeeds):
+`scripts/demo-run.sh` demos **the installed, hardened service** (decided in M8: evidence
+from the real deliverable, not a foreground process outside the systemd sandbox). Run as
+your user; it asks for sudo once:
 
-1. `demo-prep`; write "before" state (`nmcli general`, `nmcli -t device`, `ip route`) to `before.txt`.
+1. `demo-prep`, then restart the service (fresh in-memory state); "before" snapshot.
 2. `sudo btmon -w capture.btsnoop &`
-3. `systemctl stop teton-provisiond`; `sudo -u teton-prov teton-device run --foreground --event-log events.jsonl`.
-4. On Ctrl-C: "after" state + `ping -c3 <gateway>` + `nmcli networking connectivity check`
-   to `after.txt`; stop btmon; run `verify-capture capture.btsnoop` (prompts for the
-   PSK with no echo, searches the capture for the PSK and SSID as raw bytes and in
-   their base64 forms, prints `NOT FOUND` / `FOUND`, and lists the sealed frames
-   that were seen) → `verify.txt`.
-5. Everything goes in `docs/evidence/<timestamp>/`.
+3. `teton-device label` shows the QR; follow `journalctl -fu teton-provisiond` until the
+   device logs `session ended reason=Provisioned` (or Ctrl-C).
+4. "After" snapshot (+ gateway ping, connectivity check), device log as text and journal
+   JSON, NetworkManager log, `systemd-analyze security`.
+5. `verify-capture`: prints the over-the-air message transcript (HCI ACL → L2CAP → ATT →
+   framing → JSON) and searches the capture for every password typed on the phone
+   (prompted without echo; raw, hex and base64 at every alignment). PASS requires no
+   credential found and no plaintext message other than `hello`/`challenge`/`wait`/`error`.
+
+Everything goes in `docs/evidence/<UTC timestamp>/`.
 
 Phone: airplane mode with only Bluetooth on (screenshot), screen recording of: scan →
 verify → network list → wrong password ×3 → locked countdown → correct password →

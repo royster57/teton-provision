@@ -1,0 +1,203 @@
+#!/usr/bin/env python3
+"""Checks a btmon capture of a provisioning session for leaked credentials.
+
+    scripts/verify-capture capture.btsnoop [--ssid NAME]
+
+1. Prompts (no echo) for every password typed on the phone, including wrong
+   ones, and searches the whole capture for each: raw, hex and base64 at every
+   byte alignment. Nothing typed is stored or printed.
+2. Reassembles the over-the-air traffic (HCI ACL -> L2CAP -> ATT -> the
+   provisioning chunk framing) and prints every protocol message, so a reader
+   can see that only `hello` and `challenge` travel in plaintext.
+
+Standard library only. Exit status 0 = PASS, 1 = a secret was found.
+"""
+
+import argparse
+import base64
+import binascii
+import getpass
+import json
+import struct
+import sys
+
+BTSNOOP_MAGIC = b"btsnoop\0"
+DATALINK_MONITOR = 2001  # btmon -w
+OP_ACL_TX, OP_ACL_RX = 4, 5  # host->controller (device sends), controller->host (phone sent)
+ATT_CID = 0x0004
+ATT_EXCHANGE_MTU_REQ, ATT_EXCHANGE_MTU_RSP = 0x02, 0x03
+ATT_WRITE_REQ, ATT_WRITE_CMD, ATT_NOTIFY = 0x12, 0x52, 0x1B
+FINAL, INDEX_MASK = 0x80, 0x7F
+# Envelope types that may travel unencrypted; none carries anything secret.
+PLAINTEXT_ALLOWED = {"hello", "challenge", "wait", "error", "sealed"}
+
+
+def read_btsnoop(path):
+    """Yields (timestamp_us, opcode, payload) for every record."""
+    with open(path, "rb") as f:
+        data = f.read()
+    if data[:8] != BTSNOOP_MAGIC:
+        sys.exit(f"{path}: not a btsnoop file")
+    _version, datalink = struct.unpack(">II", data[8:16])
+    if datalink != DATALINK_MONITOR:
+        sys.exit(f"{path}: datalink {datalink}, expected {DATALINK_MONITOR} (btmon -w)")
+    off = 16
+    while off + 24 <= len(data):
+        _orig, incl, flags, _drops, ts = struct.unpack(">IIIIq", data[off : off + 24])
+        off += 24
+        yield ts, flags & 0xFFFF, data[off : off + incl]
+        off += incl
+
+
+def att_pdus(records):
+    """Reassembles ACL fragments into L2CAP frames; yields ATT PDUs with direction."""
+    partial = {}  # (direction, handle) -> [buffer, needed]
+    for ts, op, payload in records:
+        if op not in (OP_ACL_TX, OP_ACL_RX) or len(payload) < 4:
+            continue
+        hf, length = struct.unpack("<HH", payload[:4])
+        handle, pb = hf & 0x0FFF, (hf >> 12) & 0x3
+        frag = payload[4 : 4 + length]
+        key = (op, handle)
+        if pb in (0b00, 0b10):  # first fragment
+            if len(frag) < 4:
+                continue
+            l2len = struct.unpack("<H", frag[:2])[0]
+            partial[key] = [bytearray(frag), l2len + 4]
+        elif key in partial:  # continuation
+            partial[key][0] += frag
+        else:
+            continue
+        buf, need = partial[key]
+        if len(buf) >= need:
+            del partial[key]
+            cid = struct.unpack("<H", buf[2:4])[0]
+            if cid == ATT_CID:
+                yield ts, ("device->phone" if op == OP_ACL_TX else "phone->device"), bytes(buf[4:need])
+
+
+class Stream:
+    """Per (direction, attribute handle) reassembly of the provisioning framing."""
+
+    def __init__(self):
+        self.buf, self.next = bytearray(), 0
+
+    def push(self, chunk):
+        if not chunk or chunk[0] & INDEX_MASK != self.next:
+            self.buf, self.next = bytearray(), 0
+            if not chunk or chunk[0] & INDEX_MASK != 0:
+                return None
+        self.buf += chunk[1:]
+        if chunk[0] & FINAL:
+            msg, self.buf, self.next = bytes(self.buf), bytearray(), 0
+            return msg
+        self.next = (self.next + 1) & INDEX_MASK
+        return None
+
+
+def describe(msg):
+    t = msg.get("t")
+    if t == "sealed":
+        ct = base64.urlsafe_b64decode(msg["ct"] + "=" * (-len(msg["ct"]) % 4))
+        eph = " + phone ephemeral key" if "e" in msg else ""
+        return f"sealed: {len(ct)} bytes of AES-GCM ciphertext{eph}"
+    if t == "hello":
+        return f"hello (plaintext): v={msg.get('v')}"
+    if t == "challenge":
+        return f"challenge (plaintext): id={msg.get('id')} mtu={msg.get('mtu')} nonce={msg.get('n')}"
+    return f"{t} (plaintext): {json.dumps({k: v for k, v in msg.items() if k != 't'})}"
+
+
+def transcript(path):
+    streams, out, start, mtus = {}, [], None, []
+    for ts, direction, pdu in att_pdus(read_btsnoop(path)):
+        start = ts if start is None else start
+        op = pdu[0]
+        if op in (ATT_EXCHANGE_MTU_REQ, ATT_EXCHANGE_MTU_RSP) and len(pdu) >= 3:
+            mtus.append((direction, struct.unpack("<H", pdu[1:3])[0]))
+            continue
+        if op not in (ATT_WRITE_REQ, ATT_WRITE_CMD, ATT_NOTIFY) or len(pdu) < 3:
+            continue
+        handle, value = struct.unpack("<H", pdu[1:3])[0], pdu[3:]
+        msg = streams.setdefault((direction, handle), Stream()).push(value)
+        if msg is None:
+            continue
+        try:
+            parsed = json.loads(msg)
+        except ValueError:
+            continue  # not provisioning traffic (e.g. a descriptor write)
+        if isinstance(parsed, dict) and "t" in parsed:
+            out.append(((ts - start) / 1e6, direction, len(msg), parsed))
+    return out, mtus
+
+
+def alignments_b64(secret):
+    """Substrings any base64 encoding of `secret` must contain, at all 3 alignments."""
+    subs = set()
+    for pad in range(3):
+        for enc in (base64.b64encode, base64.urlsafe_b64encode):
+            s = enc(b"\0" * pad + secret + b"\0\0").decode()
+            first, last = -(-pad * 4 // 3), (pad + len(secret)) * 4 // 3
+            if last - first >= 6:
+                subs.add(s[first:last])
+    return subs
+
+
+def search(data, secret):
+    forms = {"raw bytes": [secret], "hex": [binascii.hexlify(secret), binascii.hexlify(secret).upper()]}
+    forms["base64"] = [s.encode() for s in alignments_b64(secret)]
+    return {name: sum(data.count(f) for f in variants) for name, variants in forms.items()}
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("capture")
+    ap.add_argument("--ssid", help="also report where the network name appears")
+    args = ap.parse_args()
+    sys.stdout.reconfigure(line_buffering=True)  # keep output ahead of the prompts when piped
+    with open(args.capture, "rb") as f:
+        data = f.read()
+
+    print(f"Capture: {args.capture} ({len(data)} bytes)\n")
+    print("== Over-the-air provisioning messages")
+    messages, mtus = transcript(args.capture)
+    for direction, mtu in mtus:
+        print(f"   ATT MTU exchange ({direction}): {mtu}")
+    unexpected_plaintext = []
+    for t, direction, size, msg in messages:
+        print(f"   {t:8.3f}s  {direction:13}  {size:5} B  {describe(msg)}")
+        if msg["t"] not in PLAINTEXT_ALLOWED:
+            unexpected_plaintext.append(msg["t"])
+    sealed = sum(1 for *_, m in messages if m["t"] == "sealed")
+    print(f"   {len(messages)} messages, {sealed} sealed\n")
+
+    print("== Credential search (type each password used on the phone; empty line to finish)")
+    secrets = []
+    while True:
+        s = getpass.getpass(f"   password #{len(secrets) + 1}: ")
+        if not s:
+            break
+        secrets.append(s.encode())
+    leaked = False
+    for i, secret in enumerate(secrets, 1):
+        hits = search(data, secret)
+        found = {k: v for k, v in hits.items() if v}
+        leaked |= bool(found)
+        verdict = "FOUND " + ", ".join(f"{k} x{v}" for k, v in found.items()) if found else "NOT FOUND"
+        print(f"   password #{i} ({len(secret)} chars): raw / hex / base64 -> {verdict}")
+    if args.ssid:
+        n = data.count(args.ssid.encode())
+        print(f"   SSID {args.ssid!r}: raw bytes found {n} time(s)"
+              + (" (short names can also match unrelated bytes by chance)" if n and len(args.ssid) < 6 else ""))
+    print()
+
+    ok = not leaked and not unexpected_plaintext and sealed > 0
+    if unexpected_plaintext:
+        print(f"!! unexpected plaintext message types: {unexpected_plaintext}")
+    print("RESULT:", "PASS: no credential appears in the capture; everything beyond hello/challenge is sealed."
+          if ok else "FAIL")
+    return 0 if ok else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
