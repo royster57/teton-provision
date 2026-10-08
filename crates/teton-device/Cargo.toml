@@ -1,0 +1,20 @@
+[package]
+name = "teton-device"
+description = "Teton device daemon: Wi-Fi provisioning over BLE"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+teton-proto.workspace = true
+
+anyhow.workspace = true
+bluer.workspace = true
+clap.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+zbus.workspace = true
+
+[lints]
+workspace = true
