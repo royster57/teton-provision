@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Undoes scripts/demo-prep: turns autoconnect back on for exactly the Wi-Fi
-# profiles it turned off. The teton-provisioned profile is left alone; remove
-# it with `sudo teton-device reset` (or `nmcli connection delete teton-provisioned`).
+# profiles it turned off. Safe to re-run: profiles already restored are skipped.
+# The teton-provisioned profile is left alone; remove it with
+# `sudo teton-device reset` (or `nmcli connection delete teton-provisioned`).
 # Usage: scripts/demo-restore [--dry-run]
 set -euo pipefail
 
@@ -14,16 +15,37 @@ if [ ! -f "$saved" ]; then
   echo "Nothing to restore ($saved not found)."
   exit 0
 fi
-restored=0
+
+# Current autoconnect state of every profile, in one call.
+declare -A auto name
+while IFS=: read -r uuid a n; do
+  auto[$uuid]=$a
+  name[$uuid]=$n
+done < <(nmcli -t -f UUID,AUTOCONNECT,NAME connection show)
+
+todo=()
 missing=0
 while read -r uuid; do
   [ -n "$uuid" ] || continue
-  if run nmcli connection modify "$uuid" connection.autoconnect yes 2> /dev/null; then
-    restored=$((restored + 1))
-  else
-    missing=$((missing + 1)) # profile deleted since; nothing to restore
+  if [ -z "${auto[$uuid]:-}" ]; then
+    missing=$((missing + 1)) # deleted since demo-prep
+  elif [ "${auto[$uuid]}" = "no" ]; then
+    todo+=("$uuid")
   fi
-done < "$saved"
+done < <(sort -u "$saved")
+
+# Each change is written through netplan on Ubuntu 24.04 (about 1.5 s each).
+echo "Restoring ${#todo[@]} Wi-Fi profiles; this takes about $(( (${#todo[@]} * 3 + 1) / 2 )) s..."
+n=0
+for uuid in "${todo[@]}"; do
+  n=$((n + 1))
+  echo "[$n/${#todo[@]}] autoconnect on: ${name[$uuid]}"
+  run nmcli connection modify "$uuid" connection.autoconnect yes
+done
 run rm -f "$saved"
-echo "autoconnect restored for $restored Wi-Fi profiles ($missing no longer exist)."
-$dry && echo "(dry run: nothing changed)" || echo "NetworkManager will reconnect to your usual network on its own."
+[ "$missing" -gt 0 ] && echo "($missing recorded profiles no longer exist)"
+if $dry; then
+  echo "(dry run: nothing changed)"
+else
+  echo "Done. NetworkManager will reconnect to your usual network on its own."
+fi
