@@ -106,8 +106,11 @@ private network namespace.
 
 ## Phone recording
 
-*To be added: screen recording of the run, the airplane-mode screenshot, and the CSV
-exported from "Done today".*
+[`phone-recording.mp4`](20261008T193026Z/phone-recording.mp4) (2:05, 6.7 MB) is the phone
+screen for the whole run: scanning the label, the device picker, verification, the network
+list, the three rejections and the countdown, *Device online*, and the "Done today" list.
+
+*Still to add: the airplane-mode screenshot and the CSV exported from "Done today".*
 
 ## Notes on this run
 
