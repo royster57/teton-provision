@@ -28,7 +28,8 @@ snapshot() { # $1 = file
     echo; echo "## devices";                     nmcli -f DEVICE,TYPE,STATE,CONNECTION device
     echo; echo "## active connections";          nmcli -f NAME,TYPE,DEVICE connection show --active
     echo; echo "## routes";                      ip route
-    echo; echo "## teton-provisioned profile";   nmcli -f connection.id,connection.autoconnect,connection.permissions,802-11-wireless.ssid,802-11-wireless-security.key-mgmt,802-11-wireless-security.psk-flags,connection.filename connection show teton-provisioned 2>&1 || true
+    echo; echo "## teton-provisioned profile";   nmcli -f connection.id,connection.autoconnect,connection.permissions,802-11-wireless.ssid,802-11-wireless-security.key-mgmt,802-11-wireless-security.psk-flags connection show teton-provisioned 2>&1 || true
+                                                 nmcli -f NAME,FILENAME connection show | grep -E "^(NAME|teton-provisioned) " || true
     echo; echo "## service";                     systemctl status "$service" --no-pager -n 0 | head -5 || true
   } > "$1"
 }
