@@ -110,7 +110,9 @@ fn init_logging(event_log: Option<&std::path::Path>) -> Result<()> {
     let filter =
         tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into());
     // stderr goes to the terminal in the foreground and to the journal under systemd.
-    let stderr = tracing_subscriber::fmt::layer().with_writer(std::io::stderr);
+    let stderr = tracing_subscriber::fmt::layer()
+        .with_writer(std::io::stderr)
+        .with_ansi(std::io::IsTerminal::is_terminal(&std::io::stderr()));
     let events = match event_log {
         Some(path) => {
             let file = std::fs::OpenOptions::new()

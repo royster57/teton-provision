@@ -52,8 +52,8 @@ trap 'echo "(stopped)"' INT
 while IFS= read -r line; do
   printf '%s\n' "$line"
   case "$line" in *"session ended reason=Provisioned"*) break ;; esac
-done < <(journalctl -fu "$service" --since "$start" -o cat --no-pager)
-kill "$!" 2> /dev/null || true
+done < <(journalctl -fu "$service" --since "$start" -o cat --no-pager | sed -u 's/\x1b\[[0-9;]*m//g')
+pkill -f "[j]ournalctl -fu $service --since $start" 2> /dev/null || true
 trap - INT
 echo "------------------------------------------------------------------------"
 sleep 3 # let the connectivity state settle
