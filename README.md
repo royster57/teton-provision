@@ -42,8 +42,24 @@ generates the device's key and label, and starts advertising because it isn't pr
 
 ```bash
 systemctl status teton-provisiond
-teton-device label          # prints the label QR (also saved as /var/lib/teton-provision/label.png and label.svg)
 ```
+
+### The device label
+
+Each device has a QR label. It holds the device's ID and public key, which is how the phone
+knows it's talking to the real device. On production hardware the label is a sticker
+printed at the factory. On a test machine, the device shows its own label, in any of three
+ways:
+
+```bash
+teton-device label                                  # 1. print the QR in this terminal (any user)
+xdg-open /var/lib/teton-provision/label.png         # 2. open it as an image
+xdg-open /var/lib/teton-provision/label.svg         # 3. a 50 mm printable sticker with the ID underneath
+```
+
+The terminal QR is about 30 lines tall, so make the window tall enough; it is drawn black on
+white, so dark terminal themes are fine. The label only changes with
+`teton-device reset --new-identity`.
 
 ### 2. Prepare the phone (once, while online)
 
@@ -52,7 +68,8 @@ From then on the app works offline; airplane mode with Bluetooth turned on is fi
 
 ### 3. Provision
 
-1. Scan the label QR with the phone's **camera app**, or press **Scan device label** in the app.
+1. Show the [device label](#the-device-label) and scan it with the phone's **camera app**, or
+   press **Scan device label** in the app.
 2. Press **Connect** and pick the one device Chrome lists. The first time, allow "Nearby devices".
 3. *Device verified* appears, then the networks the device can see. Pick one and enter the password.
 4. Watch the progress: *Credentials sent securely → Joining → Got an address → Device online*.
