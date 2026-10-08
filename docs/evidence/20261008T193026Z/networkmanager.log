@@ -1,0 +1,150 @@
+Oct 08 22:31:11.206099 Gibor NetworkManager[1109]: <info>  [1791487871.2060] audit: op="connection-add" uuid="1a028558-6113-42f8-9a9a-30813911a10a" name="teton-provisioned-candidate" pid=76874 uid=133 result="success"
+Oct 08 22:31:11.207994 Gibor NetworkManager[1109]: <info>  [1791487871.2079] device (wlp0s20f3): Activation: starting connection 'teton-provisioned-candidate' (1a028558-6113-42f8-9a9a-30813911a10a)
+Oct 08 22:31:11.208029 Gibor NetworkManager[1109]: <info>  [1791487871.2080] audit: op="connection-activate" uuid="1a028558-6113-42f8-9a9a-30813911a10a" name="teton-provisioned-candidate" pid=76874 uid=133 result="success"
+Oct 08 22:31:11.208064 Gibor NetworkManager[1109]: <info>  [1791487871.2080] device (wlp0s20f3): state change: disconnected -> prepare (reason 'none', sys-iface-state: 'managed')
+Oct 08 22:31:11.208236 Gibor NetworkManager[1109]: <info>  [1791487871.2082] manager: NetworkManager state is now CONNECTING
+Oct 08 22:31:11.208390 Gibor NetworkManager[1109]: <info>  [1791487871.2083] device (wlp0s20f3): state change: prepare -> config (reason 'none', sys-iface-state: 'managed')
+Oct 08 22:31:11.208531 Gibor NetworkManager[1109]: <info>  [1791487871.2085] device (wlp0s20f3): Activation: (wifi) access point 'teton-provisioned-candidate' has security, but secrets are required.
+Oct 08 22:31:11.208538 Gibor NetworkManager[1109]: <info>  [1791487871.2085] device (wlp0s20f3): state change: config -> need-auth (reason 'none', sys-iface-state: 'managed')
+Oct 08 22:31:11.208621 Gibor NetworkManager[1109]: <info>  [1791487871.2086] sup-iface[7d9154c7bad60282,0,wlp0s20f3]: wps: type pbc start...
+Oct 08 22:31:11.209069 Gibor NetworkManager[1109]: <info>  [1791487871.2090] device (wlp0s20f3): state change: need-auth -> prepare (reason 'none', sys-iface-state: 'managed')
+Oct 08 22:31:11.209308 Gibor NetworkManager[1109]: <info>  [1791487871.2093] device (wlp0s20f3): state change: prepare -> config (reason 'none', sys-iface-state: 'managed')
+Oct 08 22:31:11.209429 Gibor NetworkManager[1109]: <info>  [1791487871.2094] device (wlp0s20f3): Activation: (wifi) connection 'teton-provisioned-candidate' has security, and secrets exist.  No new secrets needed.
+Oct 08 22:31:11.209721 Gibor NetworkManager[1109]: <info>  [1791487871.2097] Config: added 'ssid' value 'roy'
+Oct 08 22:31:11.209726 Gibor NetworkManager[1109]: <info>  [1791487871.2097] Config: added 'scan_ssid' value '1'
+Oct 08 22:31:11.209731 Gibor NetworkManager[1109]: <info>  [1791487871.2097] Config: added 'bgscan' value 'simple:30:-70:86400'
+Oct 08 22:31:11.209738 Gibor NetworkManager[1109]: <info>  [1791487871.2097] Config: added 'key_mgmt' value 'WPA-PSK WPA-PSK-SHA256 FT-PSK SAE FT-SAE'
+Oct 08 22:31:11.209741 Gibor NetworkManager[1109]: <info>  [1791487871.2097] Config: added 'psk' value '<hidden>'
+Oct 08 22:31:11.223420 Gibor NetworkManager[1109]: <info>  [1791487871.2234] device (wlp0s20f3): supplicant interface state: disconnected -> authenticating
+Oct 08 22:31:11.223428 Gibor NetworkManager[1109]: <info>  [1791487871.2234] device (p2p-dev-wlp0s20f3): supplicant management interface state: disconnected -> authenticating
+Oct 08 22:31:11.251035 Gibor NetworkManager[1109]: <info>  [1791487871.2510] device (wlp0s20f3): supplicant interface state: authenticating -> associating
+Oct 08 22:31:11.251044 Gibor NetworkManager[1109]: <info>  [1791487871.2510] device (p2p-dev-wlp0s20f3): supplicant management interface state: authenticating -> associating
+Oct 08 22:31:11.318684 Gibor NetworkManager[1109]: <info>  [1791487871.3186] device (wlp0s20f3): supplicant interface state: associating -> 4way_handshake
+Oct 08 22:31:11.318692 Gibor NetworkManager[1109]: <info>  [1791487871.3186] device (p2p-dev-wlp0s20f3): supplicant management interface state: associating -> 4way_handshake
+Oct 08 22:31:15.336165 Gibor NetworkManager[1109]: <info>  [1791487875.3361] device (wlp0s20f3): supplicant interface state: 4way_handshake -> disconnected
+Oct 08 22:31:15.336201 Gibor NetworkManager[1109]: <info>  [1791487875.3361] device (wlp0s20f3): Activation: (wifi) disconnected during association, asking for new key
+Oct 08 22:31:15.336263 Gibor NetworkManager[1109]: <info>  [1791487875.3362] device (wlp0s20f3): state change: config -> need-auth (reason 'supplicant-disconnect', sys-iface-state: 'managed')
+Oct 08 22:31:15.336431 Gibor NetworkManager[1109]: <info>  [1791487875.3364] device (p2p-dev-wlp0s20f3): supplicant management interface state: 4way_handshake -> disconnected
+Oct 08 22:31:15.336634 Gibor NetworkManager[1109]: <warn>  [1791487875.3366] device (wlp0s20f3): no secrets: No agents were available for this request.
+Oct 08 22:31:15.336638 Gibor NetworkManager[1109]: <info>  [1791487875.3366] device (wlp0s20f3): state change: need-auth -> failed (reason 'no-secrets', sys-iface-state: 'managed')
+Oct 08 22:31:15.336791 Gibor NetworkManager[1109]: <info>  [1791487875.3367] manager: NetworkManager state is now CONNECTED_LOCAL
+Oct 08 22:31:15.336900 Gibor NetworkManager[1109]: <warn>  [1791487875.3368] device (wlp0s20f3): Activation: failed for connection 'teton-provisioned-candidate'
+Oct 08 22:31:15.338741 Gibor NetworkManager[1109]: <info>  [1791487875.3387] device (wlp0s20f3): state change: failed -> disconnected (reason 'none', sys-iface-state: 'managed')
+Oct 08 22:31:15.363459 Gibor NetworkManager[1109]: <info>  [1791487875.3634] audit: op="connection-delete" uuid="1a028558-6113-42f8-9a9a-30813911a10a" name="teton-provisioned-candidate" pid=76874 uid=133 result="success"
+Oct 08 22:31:15.436649 Gibor NetworkManager[1109]: <info>  [1791487875.4366] device (wlp0s20f3): supplicant interface state: disconnected -> inactive
+Oct 08 22:31:15.436657 Gibor NetworkManager[1109]: <info>  [1791487875.4366] device (p2p-dev-wlp0s20f3): supplicant management interface state: disconnected -> inactive
+Oct 08 22:31:27.489739 Gibor NetworkManager[1109]: <info>  [1791487887.4897] audit: op="connection-add" uuid="f6b67aab-807f-4b10-9e5f-02820e4f0062" name="teton-provisioned-candidate" pid=76874 uid=133 result="success"
+Oct 08 22:31:27.491698 Gibor NetworkManager[1109]: <info>  [1791487887.4916] device (wlp0s20f3): Activation: starting connection 'teton-provisioned-candidate' (f6b67aab-807f-4b10-9e5f-02820e4f0062)
+Oct 08 22:31:27.491741 Gibor NetworkManager[1109]: <info>  [1791487887.4917] audit: op="connection-activate" uuid="f6b67aab-807f-4b10-9e5f-02820e4f0062" name="teton-provisioned-candidate" pid=76874 uid=133 result="success"
+Oct 08 22:31:27.491793 Gibor NetworkManager[1109]: <info>  [1791487887.4917] device (wlp0s20f3): state change: disconnected -> prepare (reason 'none', sys-iface-state: 'managed')
+Oct 08 22:31:27.491943 Gibor NetworkManager[1109]: <info>  [1791487887.4919] manager: NetworkManager state is now CONNECTING
+Oct 08 22:31:27.492106 Gibor NetworkManager[1109]: <info>  [1791487887.4920] device (wlp0s20f3): state change: prepare -> config (reason 'none', sys-iface-state: 'managed')
+Oct 08 22:31:27.492253 Gibor NetworkManager[1109]: <info>  [1791487887.4922] device (wlp0s20f3): Activation: (wifi) access point 'teton-provisioned-candidate' has security, but secrets are required.
+Oct 08 22:31:27.492260 Gibor NetworkManager[1109]: <info>  [1791487887.4922] device (wlp0s20f3): state change: config -> need-auth (reason 'none', sys-iface-state: 'managed')
+Oct 08 22:31:27.492333 Gibor NetworkManager[1109]: <info>  [1791487887.4923] sup-iface[7d9154c7bad60282,0,wlp0s20f3]: wps: type pbc start...
+Oct 08 22:31:27.492726 Gibor NetworkManager[1109]: <info>  [1791487887.4927] device (wlp0s20f3): state change: need-auth -> prepare (reason 'none', sys-iface-state: 'managed')
+Oct 08 22:31:27.492879 Gibor NetworkManager[1109]: <info>  [1791487887.4928] device (wlp0s20f3): state change: prepare -> config (reason 'none', sys-iface-state: 'managed')
+Oct 08 22:31:27.493012 Gibor NetworkManager[1109]: <info>  [1791487887.4930] device (wlp0s20f3): Activation: (wifi) connection 'teton-provisioned-candidate' has security, and secrets exist.  No new secrets needed.
+Oct 08 22:31:27.493463 Gibor NetworkManager[1109]: <info>  [1791487887.4934] Config: added 'ssid' value 'roy'
+Oct 08 22:31:27.493471 Gibor NetworkManager[1109]: <info>  [1791487887.4934] Config: added 'scan_ssid' value '1'
+Oct 08 22:31:27.493477 Gibor NetworkManager[1109]: <info>  [1791487887.4934] Config: added 'bgscan' value 'simple:30:-70:86400'
+Oct 08 22:31:27.493489 Gibor NetworkManager[1109]: <info>  [1791487887.4934] Config: added 'key_mgmt' value 'WPA-PSK WPA-PSK-SHA256 FT-PSK SAE FT-SAE'
+Oct 08 22:31:27.493494 Gibor NetworkManager[1109]: <info>  [1791487887.4934] Config: added 'psk' value '<hidden>'
+Oct 08 22:31:27.504965 Gibor NetworkManager[1109]: <info>  [1791487887.5049] device (wlp0s20f3): supplicant interface state: inactive -> scanning
+Oct 08 22:31:27.504974 Gibor NetworkManager[1109]: <info>  [1791487887.5049] device (p2p-dev-wlp0s20f3): supplicant management interface state: inactive -> scanning
+Oct 08 22:31:28.373135 Gibor NetworkManager[1109]: <info>  [1791487888.3731] device (wlp0s20f3): supplicant interface state: scanning -> authenticating
+Oct 08 22:31:28.373148 Gibor NetworkManager[1109]: <info>  [1791487888.3731] device (p2p-dev-wlp0s20f3): supplicant management interface state: scanning -> authenticating
+Oct 08 22:31:28.400265 Gibor NetworkManager[1109]: <info>  [1791487888.4002] device (wlp0s20f3): supplicant interface state: authenticating -> associating
+Oct 08 22:31:28.400275 Gibor NetworkManager[1109]: <info>  [1791487888.4002] device (p2p-dev-wlp0s20f3): supplicant management interface state: authenticating -> associating
+Oct 08 22:31:28.465624 Gibor NetworkManager[1109]: <info>  [1791487888.4656] device (wlp0s20f3): supplicant interface state: associating -> 4way_handshake
+Oct 08 22:31:28.465631 Gibor NetworkManager[1109]: <info>  [1791487888.4656] device (p2p-dev-wlp0s20f3): supplicant management interface state: associating -> 4way_handshake
+Oct 08 22:31:32.487985 Gibor NetworkManager[1109]: <info>  [1791487892.4879] device (wlp0s20f3): supplicant interface state: 4way_handshake -> disconnected
+Oct 08 22:31:32.488021 Gibor NetworkManager[1109]: <info>  [1791487892.4880] device (wlp0s20f3): Activation: (wifi) disconnected during association, asking for new key
+Oct 08 22:31:32.488078 Gibor NetworkManager[1109]: <info>  [1791487892.4880] device (wlp0s20f3): state change: config -> need-auth (reason 'supplicant-disconnect', sys-iface-state: 'managed')
+Oct 08 22:31:32.488244 Gibor NetworkManager[1109]: <info>  [1791487892.4882] device (p2p-dev-wlp0s20f3): supplicant management interface state: 4way_handshake -> disconnected
+Oct 08 22:31:32.488439 Gibor NetworkManager[1109]: <warn>  [1791487892.4884] device (wlp0s20f3): no secrets: No agents were available for this request.
+Oct 08 22:31:32.488446 Gibor NetworkManager[1109]: <info>  [1791487892.4884] device (wlp0s20f3): state change: need-auth -> failed (reason 'no-secrets', sys-iface-state: 'managed')
+Oct 08 22:31:32.488621 Gibor NetworkManager[1109]: <info>  [1791487892.4886] manager: NetworkManager state is now CONNECTED_LOCAL
+Oct 08 22:31:32.488818 Gibor NetworkManager[1109]: <warn>  [1791487892.4888] device (wlp0s20f3): Activation: failed for connection 'teton-provisioned-candidate'
+Oct 08 22:31:32.489036 Gibor NetworkManager[1109]: <info>  [1791487892.4890] device (wlp0s20f3): state change: failed -> disconnected (reason 'none', sys-iface-state: 'managed')
+Oct 08 22:31:32.513264 Gibor NetworkManager[1109]: <info>  [1791487892.5132] audit: op="connection-delete" uuid="f6b67aab-807f-4b10-9e5f-02820e4f0062" name="teton-provisioned-candidate" pid=76874 uid=133 result="success"
+Oct 08 22:31:34.589324 Gibor NetworkManager[1109]: <info>  [1791487894.5893] device (wlp0s20f3): supplicant interface state: disconnected -> inactive
+Oct 08 22:31:34.589335 Gibor NetworkManager[1109]: <info>  [1791487894.5893] device (p2p-dev-wlp0s20f3): supplicant management interface state: disconnected -> inactive
+Oct 08 22:31:41.188210 Gibor NetworkManager[1109]: <info>  [1791487901.1881] audit: op="connection-add" uuid="d7654e4b-04b8-4962-b02a-581e6d9d0b0c" name="teton-provisioned-candidate" pid=76874 uid=133 result="success"
+Oct 08 22:31:41.190121 Gibor NetworkManager[1109]: <info>  [1791487901.1901] device (wlp0s20f3): Activation: starting connection 'teton-provisioned-candidate' (d7654e4b-04b8-4962-b02a-581e6d9d0b0c)
+Oct 08 22:31:41.190169 Gibor NetworkManager[1109]: <info>  [1791487901.1901] audit: op="connection-activate" uuid="d7654e4b-04b8-4962-b02a-581e6d9d0b0c" name="teton-provisioned-candidate" pid=76874 uid=133 result="success"
+Oct 08 22:31:41.190220 Gibor NetworkManager[1109]: <info>  [1791487901.1902] device (wlp0s20f3): state change: disconnected -> prepare (reason 'none', sys-iface-state: 'managed')
+Oct 08 22:31:41.190384 Gibor NetworkManager[1109]: <info>  [1791487901.1903] manager: NetworkManager state is now CONNECTING
+Oct 08 22:31:41.190565 Gibor NetworkManager[1109]: <info>  [1791487901.1905] device (wlp0s20f3): state change: prepare -> config (reason 'none', sys-iface-state: 'managed')
+Oct 08 22:31:41.190738 Gibor NetworkManager[1109]: <info>  [1791487901.1907] device (wlp0s20f3): Activation: (wifi) access point 'teton-provisioned-candidate' has security, but secrets are required.
+Oct 08 22:31:41.190746 Gibor NetworkManager[1109]: <info>  [1791487901.1907] device (wlp0s20f3): state change: config -> need-auth (reason 'none', sys-iface-state: 'managed')
+Oct 08 22:31:41.190845 Gibor NetworkManager[1109]: <info>  [1791487901.1908] sup-iface[7d9154c7bad60282,0,wlp0s20f3]: wps: type pbc start...
+Oct 08 22:31:41.191392 Gibor NetworkManager[1109]: <info>  [1791487901.1913] device (wlp0s20f3): state change: need-auth -> prepare (reason 'none', sys-iface-state: 'managed')
+Oct 08 22:31:41.191570 Gibor NetworkManager[1109]: <info>  [1791487901.1915] device (wlp0s20f3): state change: prepare -> config (reason 'none', sys-iface-state: 'managed')
+Oct 08 22:31:41.191805 Gibor NetworkManager[1109]: <info>  [1791487901.1917] device (wlp0s20f3): Activation: (wifi) connection 'teton-provisioned-candidate' has security, and secrets exist.  No new secrets needed.
+Oct 08 22:31:41.192172 Gibor NetworkManager[1109]: <info>  [1791487901.1921] Config: added 'ssid' value 'roy'
+Oct 08 22:31:41.192179 Gibor NetworkManager[1109]: <info>  [1791487901.1921] Config: added 'scan_ssid' value '1'
+Oct 08 22:31:41.192187 Gibor NetworkManager[1109]: <info>  [1791487901.1921] Config: added 'bgscan' value 'simple:30:-70:86400'
+Oct 08 22:31:41.192198 Gibor NetworkManager[1109]: <info>  [1791487901.1921] Config: added 'key_mgmt' value 'WPA-PSK WPA-PSK-SHA256 FT-PSK SAE FT-SAE'
+Oct 08 22:31:41.192202 Gibor NetworkManager[1109]: <info>  [1791487901.1921] Config: added 'psk' value '<hidden>'
+Oct 08 22:31:41.208539 Gibor NetworkManager[1109]: <info>  [1791487901.2085] device (wlp0s20f3): supplicant interface state: inactive -> authenticating
+Oct 08 22:31:41.208546 Gibor NetworkManager[1109]: <info>  [1791487901.2085] device (p2p-dev-wlp0s20f3): supplicant management interface state: inactive -> authenticating
+Oct 08 22:31:41.236151 Gibor NetworkManager[1109]: <info>  [1791487901.2361] device (wlp0s20f3): supplicant interface state: authenticating -> associating
+Oct 08 22:31:41.236160 Gibor NetworkManager[1109]: <info>  [1791487901.2361] device (p2p-dev-wlp0s20f3): supplicant management interface state: authenticating -> associating
+Oct 08 22:31:41.302300 Gibor NetworkManager[1109]: <info>  [1791487901.3022] device (wlp0s20f3): supplicant interface state: associating -> 4way_handshake
+Oct 08 22:31:41.302307 Gibor NetworkManager[1109]: <info>  [1791487901.3023] device (p2p-dev-wlp0s20f3): supplicant management interface state: associating -> 4way_handshake
+Oct 08 22:31:45.324538 Gibor NetworkManager[1109]: <info>  [1791487905.3245] device (wlp0s20f3): supplicant interface state: 4way_handshake -> disconnected
+Oct 08 22:31:45.324564 Gibor NetworkManager[1109]: <info>  [1791487905.3245] device (wlp0s20f3): Activation: (wifi) disconnected during association, asking for new key
+Oct 08 22:31:45.324600 Gibor NetworkManager[1109]: <info>  [1791487905.3245] device (wlp0s20f3): state change: config -> need-auth (reason 'supplicant-disconnect', sys-iface-state: 'managed')
+Oct 08 22:31:45.324708 Gibor NetworkManager[1109]: <info>  [1791487905.3247] device (p2p-dev-wlp0s20f3): supplicant management interface state: 4way_handshake -> disconnected
+Oct 08 22:31:45.324884 Gibor NetworkManager[1109]: <warn>  [1791487905.3248] device (wlp0s20f3): no secrets: No agents were available for this request.
+Oct 08 22:31:45.324889 Gibor NetworkManager[1109]: <info>  [1791487905.3248] device (wlp0s20f3): state change: need-auth -> failed (reason 'no-secrets', sys-iface-state: 'managed')
+Oct 08 22:31:45.325058 Gibor NetworkManager[1109]: <info>  [1791487905.3250] manager: NetworkManager state is now CONNECTED_LOCAL
+Oct 08 22:31:45.325206 Gibor NetworkManager[1109]: <warn>  [1791487905.3252] device (wlp0s20f3): Activation: failed for connection 'teton-provisioned-candidate'
+Oct 08 22:31:45.325310 Gibor NetworkManager[1109]: <info>  [1791487905.3253] device (wlp0s20f3): state change: failed -> disconnected (reason 'none', sys-iface-state: 'managed')
+Oct 08 22:31:45.349744 Gibor NetworkManager[1109]: <info>  [1791487905.3497] audit: op="connection-delete" uuid="d7654e4b-04b8-4962-b02a-581e6d9d0b0c" name="teton-provisioned-candidate" pid=76874 uid=133 result="success"
+Oct 08 22:31:47.424929 Gibor NetworkManager[1109]: <info>  [1791487907.4249] device (wlp0s20f3): supplicant interface state: disconnected -> inactive
+Oct 08 22:31:47.424940 Gibor NetworkManager[1109]: <info>  [1791487907.4249] device (p2p-dev-wlp0s20f3): supplicant management interface state: disconnected -> inactive
+Oct 08 22:32:24.138075 Gibor NetworkManager[1109]: <info>  [1791487944.1380] audit: op="connection-add" uuid="0a95469d-2a63-41be-be6f-3ae0b961d5fb" name="teton-provisioned-candidate" pid=76874 uid=133 result="success"
+Oct 08 22:32:24.139974 Gibor NetworkManager[1109]: <info>  [1791487944.1399] device (wlp0s20f3): Activation: starting connection 'teton-provisioned-candidate' (0a95469d-2a63-41be-be6f-3ae0b961d5fb)
+Oct 08 22:32:24.140009 Gibor NetworkManager[1109]: <info>  [1791487944.1400] audit: op="connection-activate" uuid="0a95469d-2a63-41be-be6f-3ae0b961d5fb" name="teton-provisioned-candidate" pid=76874 uid=133 result="success"
+Oct 08 22:32:24.140048 Gibor NetworkManager[1109]: <info>  [1791487944.1400] device (wlp0s20f3): state change: disconnected -> prepare (reason 'none', sys-iface-state: 'managed')
+Oct 08 22:32:24.140178 Gibor NetworkManager[1109]: <info>  [1791487944.1401] manager: NetworkManager state is now CONNECTING
+Oct 08 22:32:24.140314 Gibor NetworkManager[1109]: <info>  [1791487944.1403] device (wlp0s20f3): state change: prepare -> config (reason 'none', sys-iface-state: 'managed')
+Oct 08 22:32:24.140548 Gibor NetworkManager[1109]: <info>  [1791487944.1405] device (wlp0s20f3): Activation: (wifi) access point 'teton-provisioned-candidate' has security, but secrets are required.
+Oct 08 22:32:24.140553 Gibor NetworkManager[1109]: <info>  [1791487944.1405] device (wlp0s20f3): state change: config -> need-auth (reason 'none', sys-iface-state: 'managed')
+Oct 08 22:32:24.140622 Gibor NetworkManager[1109]: <info>  [1791487944.1406] sup-iface[7d9154c7bad60282,0,wlp0s20f3]: wps: type pbc start...
+Oct 08 22:32:24.141061 Gibor NetworkManager[1109]: <info>  [1791487944.1410] device (wlp0s20f3): state change: need-auth -> prepare (reason 'none', sys-iface-state: 'managed')
+Oct 08 22:32:24.141228 Gibor NetworkManager[1109]: <info>  [1791487944.1412] device (wlp0s20f3): state change: prepare -> config (reason 'none', sys-iface-state: 'managed')
+Oct 08 22:32:24.141337 Gibor NetworkManager[1109]: <info>  [1791487944.1413] device (wlp0s20f3): Activation: (wifi) connection 'teton-provisioned-candidate' has security, and secrets exist.  No new secrets needed.
+Oct 08 22:32:24.141495 Gibor NetworkManager[1109]: <info>  [1791487944.1414] Config: added 'ssid' value 'roy'
+Oct 08 22:32:24.141502 Gibor NetworkManager[1109]: <info>  [1791487944.1414] Config: added 'scan_ssid' value '1'
+Oct 08 22:32:24.141508 Gibor NetworkManager[1109]: <info>  [1791487944.1415] Config: added 'bgscan' value 'simple:30:-70:86400'
+Oct 08 22:32:24.141518 Gibor NetworkManager[1109]: <info>  [1791487944.1415] Config: added 'key_mgmt' value 'WPA-PSK WPA-PSK-SHA256 FT-PSK SAE FT-SAE'
+Oct 08 22:32:24.141523 Gibor NetworkManager[1109]: <info>  [1791487944.1415] Config: added 'psk' value '<hidden>'
+Oct 08 22:32:24.152405 Gibor NetworkManager[1109]: <info>  [1791487944.1523] device (wlp0s20f3): supplicant interface state: inactive -> scanning
+Oct 08 22:32:24.152413 Gibor NetworkManager[1109]: <info>  [1791487944.1524] device (p2p-dev-wlp0s20f3): supplicant management interface state: inactive -> scanning
+Oct 08 22:32:24.993597 Gibor NetworkManager[1109]: <info>  [1791487944.9935] device (wlp0s20f3): supplicant interface state: scanning -> authenticating
+Oct 08 22:32:24.993607 Gibor NetworkManager[1109]: <info>  [1791487944.9936] device (p2p-dev-wlp0s20f3): supplicant management interface state: scanning -> authenticating
+Oct 08 22:32:25.021407 Gibor NetworkManager[1109]: <info>  [1791487945.0213] device (wlp0s20f3): supplicant interface state: authenticating -> associating
+Oct 08 22:32:25.021420 Gibor NetworkManager[1109]: <info>  [1791487945.0214] device (p2p-dev-wlp0s20f3): supplicant management interface state: authenticating -> associating
+Oct 08 22:32:25.086947 Gibor NetworkManager[1109]: <info>  [1791487945.0869] device (wlp0s20f3): supplicant interface state: associating -> 4way_handshake
+Oct 08 22:32:25.086955 Gibor NetworkManager[1109]: <info>  [1791487945.0869] device (p2p-dev-wlp0s20f3): supplicant management interface state: associating -> 4way_handshake
+Oct 08 22:32:25.143882 Gibor NetworkManager[1109]: <info>  [1791487945.1438] device (wlp0s20f3): supplicant interface state: 4way_handshake -> completed
+Oct 08 22:32:25.143897 Gibor NetworkManager[1109]: <info>  [1791487945.1438] device (wlp0s20f3): Activation: (wifi) Stage 2 of 5 (Device Configure) successful. Connected to wireless network "roy"
+Oct 08 22:32:25.143907 Gibor NetworkManager[1109]: <info>  [1791487945.1439] device (p2p-dev-wlp0s20f3): supplicant management interface state: 4way_handshake -> completed
+Oct 08 22:32:25.144060 Gibor NetworkManager[1109]: <info>  [1791487945.1440] device (wlp0s20f3): state change: config -> ip-config (reason 'none', sys-iface-state: 'managed')
+Oct 08 22:32:25.144564 Gibor NetworkManager[1109]: <info>  [1791487945.1445] dhcp4 (wlp0s20f3): activation: beginning transaction (timeout in 45 seconds)
+Oct 08 22:32:25.297784 Gibor NetworkManager[1109]: <info>  [1791487945.2977] dhcp4 (wlp0s20f3): state changed new lease, address=192.168.10.6, acd pending
+Oct 08 22:32:25.449575 Gibor NetworkManager[1109]: <info>  [1791487945.4495] dhcp4 (wlp0s20f3): state changed new lease, address=192.168.10.6
+Oct 08 22:32:25.449797 Gibor NetworkManager[1109]: <info>  [1791487945.4497] policy: set 'teton-provisioned-candidate' (wlp0s20f3) as default for IPv4 routing and DNS
+Oct 08 22:32:25.453650 Gibor NetworkManager[1109]: <info>  [1791487945.4536] device (wlp0s20f3): state change: ip-config -> ip-check (reason 'none', sys-iface-state: 'managed')
+Oct 08 22:32:25.475211 Gibor NetworkManager[1109]: <info>  [1791487945.4752] device (wlp0s20f3): state change: ip-check -> secondaries (reason 'none', sys-iface-state: 'managed')
+Oct 08 22:32:25.475335 Gibor NetworkManager[1109]: <info>  [1791487945.4753] device (wlp0s20f3): state change: secondaries -> activated (reason 'none', sys-iface-state: 'managed')
+Oct 08 22:32:25.475564 Gibor NetworkManager[1109]: <info>  [1791487945.4755] manager: NetworkManager state is now CONNECTED_SITE
+Oct 08 22:32:25.476560 Gibor NetworkManager[1109]: <info>  [1791487945.4765] device (wlp0s20f3): Activation: successful, device activated.
+Oct 08 22:32:25.896454 Gibor NetworkManager[1109]: <info>  [1791487945.8964] audit: op="connection-update" uuid="0a95469d-2a63-41be-be6f-3ae0b961d5fb" name="teton-provisioned" args="connection.id,connection.autoconnect" pid=76874 uid=133 result="success"
+Oct 08 22:32:25.969664 Gibor NetworkManager[1109]: <info>  [1791487945.9696] manager: NetworkManager state is now CONNECTED_GLOBAL
+Oct 08 22:32:27.622169 Gibor NetworkManager[1109]: <info>  [1791487947.6221] dhcp6 (wlp0s20f3): activation: beginning transaction (timeout in 45 seconds)
+Oct 08 22:32:27.622516 Gibor NetworkManager[1109]: <info>  [1791487947.6225] policy: set 'teton-provisioned-candidate' (wlp0s20f3) as default for IPv6 routing and DNS
+Oct 08 22:32:27.632278 Gibor NetworkManager[1109]: <info>  [1791487947.6322] dhcp6 (wlp0s20f3): state changed new lease

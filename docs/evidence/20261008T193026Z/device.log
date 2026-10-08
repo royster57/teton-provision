@@ -1,0 +1,23 @@
+Starting teton-provisiond.service - Teton Wi-Fi provisioning over BLE...
+Started teton-provisiond.service - Teton Wi-Fi provisioning over BLE.
+2026-10-08T19:30:27.037472Z  INFO teton_device: device identity id=DBCC-11F8-0668 url=https://royster57.github.io/teton-provision/#v=1&id=DBCC11F80668&pk=BA-Ca05LnuIVXKBCu2bj4h7jdFxZmw0ohanX3whm9gcWWqSweWqO67UgaPOcEOd7976DyxhkXJ4kIdP0Gg2ORRk
+2026-10-08T19:30:27.041374Z  INFO teton_device::ble: Bluetooth adapter ready adapter="hci0" address=10:3D:1C:C4:E9:41
+2026-10-08T19:30:27.064175Z  INFO teton_device::wifi::nm: using Wi-Fi device iface=wlp0s20f3 path=/org/freedesktop/NetworkManager/Devices/2
+2026-10-08T19:30:27.117589Z  INFO teton_device::ble: advertising name=Teton-DBCC11F80668
+2026-10-08T19:30:56.340303Z  INFO teton_device::device: session started owner=65:B2:AE:E6:4B:3A mtu=517
+2026-10-08T19:30:56.340332Z  INFO teton_device::ble: advertising stopped
+2026-10-08T19:30:56.490146Z  INFO teton_device::session: phone verified the device; session open retry_after=0
+2026-10-08T19:30:58.104474Z  INFO teton_device::session: scan networks=20
+2026-10-08T19:31:11.165363Z  INFO teton_device::session: join requested ssid=roy psk=Some(<redacted len=14>) sec=None hidden=false
+2026-10-08T19:31:15.336572Z  INFO teton_device::wifi::nm: join failed; deactivating reason=AuthFailed detail=password rejected (reason 8)
+2026-10-08T19:31:15.363670Z  INFO teton_device::session: join failed reason=AuthFailed detail=password rejected (reason 8) retry_after=0
+2026-10-08T19:31:27.448117Z  INFO teton_device::session: join requested ssid=roy psk=Some(<redacted len=14>) sec=None hidden=false
+2026-10-08T19:31:32.488490Z  INFO teton_device::wifi::nm: join failed; deactivating reason=AuthFailed detail=password rejected (reason 8)
+2026-10-08T19:31:32.513489Z  INFO teton_device::session: join failed reason=AuthFailed detail=password rejected (reason 8) retry_after=0
+2026-10-08T19:31:41.147272Z  INFO teton_device::session: join requested ssid=roy psk=Some(<redacted len=14>) sec=None hidden=false
+2026-10-08T19:31:45.325001Z  INFO teton_device::wifi::nm: join failed; deactivating reason=AuthFailed detail=password rejected (reason 8)
+2026-10-08T19:31:45.350109Z  INFO teton_device::session: join failed reason=AuthFailed detail=password rejected (reason 8) retry_after=30
+2026-10-08T19:32:24.095323Z  INFO teton_device::session: join requested ssid=roy psk=Some(<redacted len=10>) sec=None hidden=false
+2026-10-08T19:32:26.206231Z  INFO teton_device::wifi::nm: joined and persisted ip=192.168.10.6 internet=Full
+2026-10-08T19:32:26.206252Z  INFO teton_device::session: join succeeded ip=192.168.10.6 internet=Full
+2026-10-08T19:32:26.288083Z  INFO teton_device::session: session ended reason=Provisioned verified=true

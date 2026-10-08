@@ -1,0 +1,39 @@
+Capture: docs/evidence/20261008T193026Z/capture.btsnoop (11743 bytes)
+
+== Over-the-air provisioning messages
+   ATT MTU exchange (device->phone): 517
+   ATT MTU exchange (phone->device): 517
+      0.759s  phone->device     19 B  hello (plaintext): v=1
+      0.785s  device->phone     82 B  challenge (plaintext): id=DBCC11F80668 mtu=517 nonce=6yL-_glb4e0gcuU39PeN-Q
+      0.909s  phone->device    154 B  sealed: 28 bytes of AES-GCM ciphertext + phone ephemeral key
+      0.910s  device->phone    138 B  sealed: 87 bytes of AES-GCM ciphertext
+      1.005s  phone->device     60 B  sealed: 28 bytes of AES-GCM ciphertext
+      2.617s  device->phone   1309 B  sealed: 965 bytes of AES-GCM ciphertext
+     15.584s  phone->device    128 B  sealed: 79 bytes of AES-GCM ciphertext
+     15.585s  device->phone     88 B  sealed: 49 bytes of AES-GCM ciphertext
+     15.631s  device->phone     92 B  sealed: 52 bytes of AES-GCM ciphertext
+     19.783s  device->phone    116 B  sealed: 70 bytes of AES-GCM ciphertext
+     31.867s  phone->device    128 B  sealed: 79 bytes of AES-GCM ciphertext
+     31.868s  device->phone     88 B  sealed: 49 bytes of AES-GCM ciphertext
+     31.915s  device->phone     92 B  sealed: 52 bytes of AES-GCM ciphertext
+     36.933s  device->phone    116 B  sealed: 70 bytes of AES-GCM ciphertext
+     45.566s  phone->device    128 B  sealed: 79 bytes of AES-GCM ciphertext
+     45.567s  device->phone     88 B  sealed: 49 bytes of AES-GCM ciphertext
+     45.614s  device->phone     92 B  sealed: 52 bytes of AES-GCM ciphertext
+     49.770s  device->phone    138 B  sealed: 87 bytes of AES-GCM ciphertext
+     88.514s  phone->device    122 B  sealed: 75 bytes of AES-GCM ciphertext
+     88.515s  device->phone     88 B  sealed: 49 bytes of AES-GCM ciphertext
+     88.563s  device->phone     92 B  sealed: 52 bytes of AES-GCM ciphertext
+     89.923s  device->phone    106 B  sealed: 63 bytes of AES-GCM ciphertext
+     90.626s  device->phone    133 B  sealed: 83 bytes of AES-GCM ciphertext
+     90.707s  phone->device     58 B  sealed: 27 bytes of AES-GCM ciphertext
+   24 messages, 22 sealed
+
+== Credential search: type each password used on the phone, wrong ones included
+   password #1 (14 chars): raw / hex / base64 -> NOT FOUND
+   password #2 (14 chars): raw / hex / base64 -> NOT FOUND
+   password #3 (14 chars): raw / hex / base64 -> NOT FOUND
+   password #4 (10 chars): raw / hex / base64 -> NOT FOUND
+   SSID 'roy': raw bytes found 0 time(s)
+
+RESULT: PASS: no credential appears in the capture; everything beyond hello/challenge is sealed.

@@ -1,0 +1,45 @@
+# 2026-10-08T19:30:29Z  6.8.0-146-generic  Ubuntu 24.04.1 LTS
+
+## nmcli general
+STATE                   CONNECTIVITY  WIFI-HW  WIFI     WWAN-HW  WWAN    
+connected (local only)  none          enabled  enabled  missing  enabled 
+
+## devices
+DEVICE             TYPE      STATE                   CONNECTION      
+lo                 loopback  connected (externally)  lo              
+br-12487ca8c567    bridge    connected (externally)  br-12487ca8c567 
+br-3f2773fd531c    bridge    connected (externally)  br-3f2773fd531c 
+br-5e945e9d66bf    bridge    connected (externally)  br-5e945e9d66bf 
+br-851203d156b9    bridge    connected (externally)  br-851203d156b9 
+br-a395e6b18683    bridge    connected (externally)  br-a395e6b18683 
+docker0            bridge    connected (externally)  docker0         
+wlp0s20f3          wifi      disconnected            --              
+p2p-dev-wlp0s20f3  wifi-p2p  disconnected            --              
+
+## active connections
+NAME             TYPE      DEVICE          
+lo               loopback  lo              
+br-12487ca8c567  bridge    br-12487ca8c567 
+br-3f2773fd531c  bridge    br-3f2773fd531c 
+br-5e945e9d66bf  bridge    br-5e945e9d66bf 
+br-851203d156b9  bridge    br-851203d156b9 
+br-a395e6b18683  bridge    br-a395e6b18683 
+docker0          bridge    docker0         
+
+## routes
+172.17.0.0/16 dev docker0 proto kernel scope link src 172.17.0.1 linkdown 
+172.19.0.0/16 dev br-851203d156b9 proto kernel scope link src 172.19.0.1 linkdown 
+172.20.0.0/16 dev br-a395e6b18683 proto kernel scope link src 172.20.0.1 linkdown 
+172.21.0.0/16 dev br-12487ca8c567 proto kernel scope link src 172.21.0.1 linkdown 
+172.22.0.0/16 dev br-5e945e9d66bf proto kernel scope link src 172.22.0.1 linkdown 
+192.168.49.0/24 dev br-3f2773fd531c proto kernel scope link src 192.168.49.1 linkdown 
+
+## teton-provisioned profile
+Error: teton-provisioned - no such connection profile.
+
+## service
+● teton-provisiond.service - Teton Wi-Fi provisioning over BLE
+     Loaded: loaded (/usr/lib/systemd/system/teton-provisiond.service; enabled; preset: enabled)
+     Active: active (running) since Thu 2026-10-08 22:30:27 IDT; 2s ago
+       Docs: https://github.com/royster57/teton-provision
+   Main PID: 76874 (teton-device)

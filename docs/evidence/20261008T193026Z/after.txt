@@ -1,0 +1,71 @@
+# 2026-10-08T19:34:32Z  6.8.0-146-generic  Ubuntu 24.04.1 LTS
+
+## nmcli general
+STATE      CONNECTIVITY  WIFI-HW  WIFI     WWAN-HW  WWAN    
+connected  full          enabled  enabled  missing  enabled 
+
+## devices
+DEVICE             TYPE      STATE                   CONNECTION        
+wlp0s20f3          wifi      connected               teton-provisioned 
+lo                 loopback  connected (externally)  lo                
+br-12487ca8c567    bridge    connected (externally)  br-12487ca8c567   
+br-3f2773fd531c    bridge    connected (externally)  br-3f2773fd531c   
+br-5e945e9d66bf    bridge    connected (externally)  br-5e945e9d66bf   
+br-851203d156b9    bridge    connected (externally)  br-851203d156b9   
+br-a395e6b18683    bridge    connected (externally)  br-a395e6b18683   
+docker0            bridge    connected (externally)  docker0           
+p2p-dev-wlp0s20f3  wifi-p2p  disconnected            --                
+
+## active connections
+NAME               TYPE      DEVICE          
+teton-provisioned  wifi      wlp0s20f3       
+lo                 loopback  lo              
+br-12487ca8c567    bridge    br-12487ca8c567 
+br-3f2773fd531c    bridge    br-3f2773fd531c 
+br-5e945e9d66bf    bridge    br-5e945e9d66bf 
+br-851203d156b9    bridge    br-851203d156b9 
+br-a395e6b18683    bridge    br-a395e6b18683 
+docker0            bridge    docker0         
+
+## routes
+default via 192.168.10.1 dev wlp0s20f3 proto dhcp src 192.168.10.6 metric 600 
+172.17.0.0/16 dev docker0 proto kernel scope link src 172.17.0.1 linkdown 
+172.19.0.0/16 dev br-851203d156b9 proto kernel scope link src 172.19.0.1 linkdown 
+172.20.0.0/16 dev br-a395e6b18683 proto kernel scope link src 172.20.0.1 linkdown 
+172.21.0.0/16 dev br-12487ca8c567 proto kernel scope link src 172.21.0.1 linkdown 
+172.22.0.0/16 dev br-5e945e9d66bf proto kernel scope link src 172.22.0.1 linkdown 
+192.168.10.0/24 dev wlp0s20f3 proto kernel scope link src 192.168.10.6 metric 600 
+192.168.49.0/24 dev br-3f2773fd531c proto kernel scope link src 192.168.49.1 linkdown 
+
+## teton-provisioned profile
+Error: 'connection show': invalid field 'connection.filename'; allowed fields: connection.id,connection.uuid,connection.stable-id,connection.type,connection.interface-name,connection.autoconnect,connection.autoconnect-priority,connection.autoconnect-retries,connection.multi-connect,connection.auth-retries,connection.timestamp,connection.permissions,connection.zone,connection.controller,connection.master,connection.slave-type,connection.port-type,connection.autoconnect-slaves,connection.autoconnect-ports,connection.secondaries,connection.gateway-ping-timeout,connection.metered,connection.lldp,connection.mdns,connection.llmnr,connection.dns-over-tls,connection.mptcp-flags,connection.mud-url,connection.wait-device-timeout,connection.wait-activation-delay
+
+## service
+● teton-provisiond.service - Teton Wi-Fi provisioning over BLE
+     Loaded: loaded (/usr/lib/systemd/system/teton-provisiond.service; enabled; preset: enabled)
+     Active: active (running) since Thu 2026-10-08 22:30:27 IDT; 4min 5s ago
+       Docs: https://github.com/royster57/teton-provision
+   Main PID: 76874 (teton-device)
+## ping gateway 192.168.10.1
+PING 192.168.10.1 (192.168.10.1) 56(84) bytes of data.
+64 bytes from 192.168.10.1: icmp_seq=1 ttl=64 time=4.12 ms
+64 bytes from 192.168.10.1: icmp_seq=2 ttl=64 time=5.71 ms
+64 bytes from 192.168.10.1: icmp_seq=3 ttl=64 time=3.59 ms
+
+--- 192.168.10.1 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2002ms
+rtt min/avg/max/mdev = 3.588/4.473/5.709/0.900 ms
+
+## NetworkManager connectivity check
+full
+
+## teton-provisioned profile (addendum captured 2026-10-08T19:40:13Z: the snapshot above
+## used an invalid nmcli field; the profile is unchanged and still active)
+connection.id:                          teton-provisioned
+connection.autoconnect:                 yes
+connection.permissions:                 --
+802-11-wireless.ssid:                   roy
+802-11-wireless-security.key-mgmt:      wpa-psk
+802-11-wireless-security.psk-flags:     0 (none)
+NAME                              FILENAME                                                                                                                                                                             
+teton-provisioned                 /run/NetworkManager/system-connections/netplan-NM-0a95469d-2a63-41be-be6f-3ae0b961d5fb-roy.nmconnection                                                                              
