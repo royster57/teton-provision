@@ -19,6 +19,9 @@ const REASONS = {
   internal: ["E-INTERNAL", () => "Something went wrong on the device. Try again."],
 };
 
+const DEVICE_HINT =
+  "Press Connect, then pick this device in the list that appears. If it isn't listed within about 15 seconds, it's probably already set up or busy: close the list.";
+
 const UNSUPPORTED_NOTE = {
   enterprise: "Enterprise (802.1X) Wi-Fi isn't supported yet",
   wep: "WEP is insecure and not supported",
@@ -89,7 +92,7 @@ async function openLabel(url) {
     const label = await parseLabelUrl(url);
     dev = freshDevice(label);
     $("device-id").textContent = formatId(label.id);
-    $("device-msg").textContent = "Press Connect, then pick this device in the list that appears.";
+    $("device-msg").textContent = DEVICE_HINT;
     $("verify-steps").hidden = true;
     $("connect-btn").disabled = false;
     show("device");
@@ -102,7 +105,7 @@ async function connect() {
   const d = dev;
   $("connect-btn").disabled = true;
   $("verify-steps").hidden = false;
-  $("device-msg").textContent = "Pick the device in the list that appears.";
+  $("device-msg").textContent = "Pick the device in the list. If it isn't listed within about 15 seconds, close the list.";
   steps("verify-steps", "connect");
   try {
     d.finished = false;

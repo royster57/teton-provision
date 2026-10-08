@@ -4,6 +4,16 @@
 import { chunk, GATT, Reassembler } from "./protocol.js";
 import { SessionError } from "./session.js";
 
+const CONNECT_TIMEOUT_MS = 20_000;
+
+function withTimeout(ms, fn) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error("timeout")), ms);
+  });
+  return Promise.race([fn(), timeout]).finally(() => clearTimeout(timer));
+}
+
 export function bluetoothAvailable() {
   return typeof navigator !== "undefined" && "bluetooth" in navigator;
 }
@@ -37,7 +47,8 @@ export class BleTransport {
       if (e.name === "NotFoundError") {
         throw new SessionError(
           "E-NOT-FOUND",
-          "Device not found. It may be busy with another phone, already set up, or out of range.",
+          "Device not found. If it's already set up, press its setup button first to change its network. " +
+            "Otherwise it may be busy with another phone, or out of range.",
         );
       }
       if (e.name === "NotAllowedError" || e.name === "SecurityError") {
@@ -54,15 +65,22 @@ export class BleTransport {
     this.#device = device;
     device.addEventListener("gattserverdisconnected", () => this.#fail("E-LOST", "Connection to the device was lost."));
     try {
-      const server = await device.gatt.connect();
-      const service = await server.getPrimaryService(GATT.SERVICE);
-      this.#rx = await service.getCharacteristic(GATT.RX);
-      this.#tx = await service.getCharacteristic(GATT.TX);
-      this.#tx.addEventListener("characteristicvaluechanged", (ev) => this.#onNotify(ev.target.value));
-      await this.#tx.startNotifications();
+      // gatt.connect() has no timeout of its own: picking a device Chrome remembers but
+      // that is no longer advertising (e.g. already provisioned) would wait indefinitely.
+      await withTimeout(CONNECT_TIMEOUT_MS, async () => {
+        const server = await device.gatt.connect();
+        const service = await server.getPrimaryService(GATT.SERVICE);
+        this.#rx = await service.getCharacteristic(GATT.RX);
+        this.#tx = await service.getCharacteristic(GATT.TX);
+        this.#tx.addEventListener("characteristicvaluechanged", (ev) => this.#onNotify(ev.target.value));
+        await this.#tx.startNotifications();
+      });
     } catch {
       this.close();
-      throw new SessionError("E-CONNECT", "Couldn't connect to the device. Move closer and try again.");
+      throw new SessionError(
+        "E-CONNECT",
+        "Couldn't connect to the device. If it's already set up, press its setup button first; otherwise move closer and try again.",
+      );
     }
   }
 

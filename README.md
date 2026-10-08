@@ -159,7 +159,7 @@ docs/                   ARCHITECTURE.md, evidence/
 | Symptom | Cause and fix |
 |---|---|
 | `Failed to register advertisement` / `Invalid Parameters (0x0d)` in `journalctl -u bluetooth --no-pager` | Unpatched `bluez` on Ubuntu 24.04 sends a malformed command that current kernels reject (LP: #2164626). Upgrade to `5.72-0ubuntu5.6` or later, then `sudo systemctl restart bluetooth`. `sudo scripts/diag-advertising.sh` captures a trace if it persists. |
-| The phone says *Device not found* | The device is already provisioned and stopped advertising (`sudo teton-device reprovision`), another phone is mid-session, or it's out of range. |
+| Chrome's device list stays empty / *Device not found* | A provisioned device stops advertising on purpose. The app asks you to "press its setup button"; on a test machine that is `sudo teton-device reprovision` (advertises for 10 minutes). Otherwise another phone is mid-session, or it's out of range. |
 | *Could not verify the device* | The label doesn't belong to this device (e.g. after `reset --new-identity`); print the current one with `teton-device label`. |
 | *Too many failed attempts* | Device-wide lockout after 3 wrong passwords: 30 s, then 60 s, then 120 s. Wait for the countdown. |
 | *Connected, but no internet* | The device joined Wi-Fi and got an address, but NetworkManager's connectivity check failed (no upstream internet, or a captive portal). |
