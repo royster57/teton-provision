@@ -20,7 +20,8 @@ Times in `device.log` are UTC; `networkmanager.log` is local time (UTC+3).
 - **Laptop before** ([`before.txt`](20261008T193026Z/before.txt)): `wlp0s20f3 wifi disconnected`,
   NetworkManager connectivity `none`, **no default route**. `demo-prep` had also turned off
   autoconnect for every saved Wi-Fi profile, so nothing could reconnect by itself.
-- **Phone**: airplane mode with Bluetooth re-enabled. See *Phone recording* below.
+- **Phone**: airplane mode with Bluetooth re-enabled; the airplane icon is in the status bar
+  for the whole [screen recording](20261008T193026Z/phone-recording.mp4).
 - The only link between the two was BLE.
 
 ## Constraint 2: a real network connection
@@ -109,8 +110,6 @@ private network namespace.
 [`phone-recording.mp4`](20261008T193026Z/phone-recording.mp4) (2:05, 6.7 MB) is the phone
 screen for the whole run: scanning the label, the device picker, verification, the network
 list, the three rejections and the countdown, *Device online*, and the "Done today" list.
-
-*Still to add: the airplane-mode screenshot and the CSV exported from "Done today".*
 
 ## Notes on this run
 
