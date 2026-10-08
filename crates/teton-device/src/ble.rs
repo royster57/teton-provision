@@ -209,3 +209,17 @@ fn spawn_disconnect_watch(
         watched.lock().expect("lock").remove(&addr);
     });
 }
+
+impl crate::device::Radio for Peripheral {
+    async fn set_advertising(&mut self, on: bool) -> Result<()> {
+        Peripheral::set_advertising(self, on).await
+    }
+
+    async fn notify(&self, chunk: Vec<u8>) -> Result<()> {
+        Peripheral::notify(self, chunk).await
+    }
+
+    async fn disconnect(&self, addr: Address) -> Result<()> {
+        Peripheral::disconnect(self, addr).await
+    }
+}

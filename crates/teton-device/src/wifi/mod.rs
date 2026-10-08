@@ -2,6 +2,7 @@
 //! shared by all backends, plus the backends themselves.
 
 pub mod nm;
+pub mod sim;
 
 use teton_proto::msg::{FailReason, Internet, JoinRequest, Network, Security};
 
@@ -39,16 +40,25 @@ impl JoinFailure {
     }
 }
 
-#[allow(async_fn_in_trait)]
-pub trait WifiBackend {
+/// Whether a provisioned profile exists, and whether it is connected.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct NetStatus {
+    pub provisioned: bool,
+    pub online: bool,
+}
+
+/// A Wi-Fi implementation the session can drive. Futures are `Send` so
+/// sessions can run as their own tasks.
+pub trait WifiBackend: Send + Sync + 'static {
     /// Up to 20 visible networks, strongest first, one entry per SSID.
-    async fn scan(&self) -> anyhow::Result<Vec<Network>>;
+    fn scan(&self) -> impl Future<Output = anyhow::Result<Vec<Network>>> + Send;
     /// Joins `req`, reporting progress; on failure the previous state is restored.
-    async fn join(
+    fn join(
         &self,
         req: &JoinRequest,
         progress: tokio::sync::mpsc::UnboundedSender<Progress>,
-    ) -> Result<Joined, JoinFailure>;
+    ) -> impl Future<Output = Result<Joined, JoinFailure>> + Send;
+    fn status(&self) -> impl Future<Output = anyhow::Result<NetStatus>> + Send;
 }
 
 /// Input checks done before touching the radio (SPEC.md §6.3 `invalid_input`).

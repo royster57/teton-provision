@@ -268,9 +268,11 @@ Each phone message also shows a short code (e.g. `E-AUTH`) that can be quoted to
 
 ### 6.4 Session rules
 
-- **One active session.** The first central to send `hello` owns the session. Any
-  other central that connects while a session is active is disconnected immediately
-  (`Device1.Disconnect`).
+- **One active session.** The first central to write owns the session, and advertising
+  pauses. BlueZ's GATT server only identifies a central when it writes, so any other
+  central is disconnected (`Device1.Disconnect`) on its first write. A session whose
+  phone left, or that hit a framing error, keeps the slot until its task finishes, so a
+  join in progress never overlaps a new session.
 - **Idle timeout:** 120 s with no message received → keys dropped, phone disconnected.
 - **Decryption failures:** 3 in one session → `error: protocol`, disconnect, and they
   count toward the connection backoff (§7.3).
@@ -298,6 +300,8 @@ Each phone message also shows a short code (e.g. `E-AUTH`) that can be quoted to
                                   MANUAL: `teton-device reprovision` (SIGUSR1) → advertise for 10 min
 ```
 
+- The device reads NetworkManager's status every 5 s; recovery and the manual window
+  are evaluated on these polls (so they take effect within one poll interval).
 - `ONLINE` means the `teton-provisioned` profile is active on the Wi-Fi device.
   "Offline" means it isn't, as seen through NM state signals.
 - In `RECOVERY`, NetworkManager keeps auto-reconnecting to the old profile on its own.
@@ -400,8 +404,8 @@ otherwise `open`.
 `teton-device run [--foreground] [--wifi=nm|simulated] [--state-dir DIR] [--event-log FILE] [timers…]`
 `teton-device label | reset [--new-identity] | reprovision`
 
-- Logging: `tracing`. In foreground: readable output on stderr and the terminal QR.
-  As a service: journald. `--event-log` writes JSON lines (one event per state
+- Logging: `tracing` to stderr, which systemd forwards to the journal (no separate
+  journald integration needed). In the foreground this also shows the terminal QR. `--event-log` writes JSON lines (one event per state
   change, message type and join stage) for evidence. Secrets never reach a log
   (enforced by the `Secret` type, §5).
 

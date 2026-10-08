@@ -3,8 +3,18 @@
 use std::path::PathBuf;
 use std::time::Duration;
 
+use std::sync::Arc;
+
 use anyhow::{Result, bail};
 use clap::{Parser, Subcommand, ValueEnum};
+use teton_device::ble::Peripheral;
+use teton_device::device::{Control, Device, Timers};
+use teton_device::identity;
+use teton_device::wifi::nm::NmWifi;
+use teton_device::wifi::sim::{self, SimWifi};
+use teton_proto::label::format_id;
+use tokio::sync::mpsc::{UnboundedSender, unbounded_channel};
+use tracing::{info, warn};
 
 #[derive(Parser, Debug)]
 #[command(version, about = "Teton device: Wi-Fi provisioning over BLE")]
@@ -85,10 +95,94 @@ fn parse_duration(s: &str) -> Result<Duration, String> {
 fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.command {
-        Command::Run(_) => bail!("`run` is not implemented yet"),
+        Command::Run(args) => tokio::runtime::Runtime::new()?.block_on(run(args)),
         Command::Label { .. } => bail!("`label` is not implemented yet"),
         Command::Reset { .. } => bail!("`reset` is not implemented yet"),
         Command::Reprovision => bail!("`reprovision` is not implemented yet"),
+    }
+}
+
+fn init_logging(event_log: Option<&std::path::Path>) -> Result<()> {
+    use tracing_subscriber::prelude::*;
+    let filter =
+        tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into());
+    // stderr goes to the terminal in the foreground and to the journal under systemd.
+    let stderr = tracing_subscriber::fmt::layer().with_writer(std::io::stderr);
+    let events = match event_log {
+        Some(path) => {
+            let file = std::fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(path)?;
+            Some(
+                tracing_subscriber::fmt::layer()
+                    .json()
+                    .with_writer(std::sync::Mutex::new(file)),
+            )
+        }
+        None => None,
+    };
+    tracing_subscriber::registry()
+        .with(filter)
+        .with(stderr)
+        .with(events)
+        .init();
+    Ok(())
+}
+
+async fn run(args: RunArgs) -> Result<()> {
+    init_logging(args.event_log.as_deref())?;
+    let identity = identity::load_or_create(&args.state_dir, &args.label_base_url)?;
+    let id = identity.label.id.clone();
+    info!(id = %format_id(&id), url = %identity.url, "device identity");
+
+    let (control_tx, control_rx) = unbounded_channel();
+    tokio::spawn(forward_signals(control_tx));
+
+    let (radio, radio_events) = Peripheral::start(format!("Teton-{id}")).await?;
+    let timers = Timers {
+        recovery_after: args.recovery_after,
+        idle_timeout: args.idle_timeout,
+        manual_window: args.manual_window,
+        ..Timers::default()
+    };
+    let key = Arc::new(identity.key);
+    match args.wifi {
+        WifiMode::Nm => {
+            let wifi = Arc::new(NmWifi::connect(None, args.join_timeout).await?);
+            Device::new(key, id, wifi, radio, timers)
+                .run(radio_events, control_rx)
+                .await
+        }
+        WifiMode::Simulated => {
+            warn!(
+                password = sim::PASSWORD,
+                "SIMULATED Wi-Fi: no real network is touched"
+            );
+            let wifi = Arc::new(SimWifi::default());
+            Device::new(key, id, wifi, radio, timers)
+                .run(radio_events, control_rx)
+                .await
+        }
+    }
+}
+
+/// SIGUSR1 opens a re-provisioning window; SIGINT/SIGTERM stop the daemon.
+async fn forward_signals(tx: UnboundedSender<Control>) -> Result<()> {
+    use tokio::signal::unix::{SignalKind, signal};
+    let mut usr1 = signal(SignalKind::user_defined1())?;
+    let mut term = signal(SignalKind::terminate())?;
+    let mut int = signal(SignalKind::interrupt())?;
+    loop {
+        let c = tokio::select! {
+            _ = usr1.recv() => Control::Reprovision,
+            _ = term.recv() => Control::Shutdown,
+            _ = int.recv() => Control::Shutdown,
+        };
+        let stop = matches!(c, Control::Shutdown);
+        if tx.send(c).is_err() || stop {
+            return Ok(());
+        }
     }
 }
 

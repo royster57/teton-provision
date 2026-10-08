@@ -14,8 +14,8 @@ use zbus::zvariant::{ObjectPath, OwnedObjectPath, OwnedValue, Value};
 
 use super::consts::*;
 use super::{
-    ApSecurity, CANDIDATE_ID, JoinFailure, JoinTracker, Joined, PROFILE_ID, Progress, Step,
-    WifiBackend, classify, dedupe, key_mgmt_for, map_connectivity, validate,
+    ApSecurity, CANDIDATE_ID, JoinFailure, JoinTracker, Joined, NetStatus, PROFILE_ID, Progress,
+    Step, WifiBackend, classify, dedupe, key_mgmt_for, map_connectivity, validate,
 };
 
 const SCAN_WAIT: Duration = Duration::from_secs(8);
@@ -517,6 +517,22 @@ impl WifiBackend for NmWifi {
         progress: UnboundedSender<Progress>,
     ) -> Result<Joined, JoinFailure> {
         self.join_inner(req, &progress).await
+    }
+
+    async fn status(&self) -> Result<NetStatus> {
+        if let Some((id, _)) = self.active_profile().await?
+            && id == PROFILE_ID
+            && self.device_state().await? == STATE_ACTIVATED
+        {
+            return Ok(NetStatus {
+                provisioned: true,
+                online: true,
+            });
+        }
+        Ok(NetStatus {
+            provisioned: !self.profiles_named(PROFILE_ID).await?.is_empty(),
+            online: false,
+        })
     }
 }
 
