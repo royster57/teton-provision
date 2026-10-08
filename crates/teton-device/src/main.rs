@@ -9,9 +9,9 @@ use anyhow::{Result, bail};
 use clap::{Parser, Subcommand, ValueEnum};
 use teton_device::ble::Peripheral;
 use teton_device::device::{Control, Device, Timers};
-use teton_device::identity;
 use teton_device::wifi::nm::NmWifi;
 use teton_device::wifi::sim::{self, SimWifi};
+use teton_device::{identity, label};
 use teton_proto::label::format_id;
 use tokio::sync::mpsc::{UnboundedSender, unbounded_channel};
 use tracing::{info, warn};
@@ -96,7 +96,7 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.command {
         Command::Run(args) => tokio::runtime::Runtime::new()?.block_on(run(args)),
-        Command::Label { .. } => bail!("`label` is not implemented yet"),
+        Command::Label { state_dir } => print_label(&state_dir),
         Command::Reset { .. } => bail!("`reset` is not implemented yet"),
         Command::Reprovision => bail!("`reprovision` is not implemented yet"),
     }
@@ -135,6 +135,15 @@ async fn run(args: RunArgs) -> Result<()> {
     let identity = identity::load_or_create(&args.state_dir, &args.label_base_url)?;
     let id = identity.label.id.clone();
     info!(id = %format_id(&id), url = %identity.url, "device identity");
+    let qr = label::write_files(&args.state_dir, &identity.url, &id)?;
+    if args.foreground {
+        eprintln!(
+            "\n{}  Teton device {}  (label: {})\n",
+            qr.to_terminal(),
+            format_id(&id),
+            args.state_dir.join("label.svg").display()
+        );
+    }
 
     let (control_tx, control_rx) = unbounded_channel();
     tokio::spawn(forward_signals(control_tx));
@@ -165,6 +174,25 @@ async fn run(args: RunArgs) -> Result<()> {
                 .await
         }
     }
+}
+
+/// Prints the label QR from `label.json`; works for any user (no key access).
+fn print_label(state_dir: &std::path::Path) -> Result<()> {
+    let path = state_dir.join(identity::LABEL_FILE);
+    let doc: serde_json::Value = serde_json::from_slice(
+        &std::fs::read(&path)
+            .map_err(|e| anyhow::anyhow!("{}: {e} (has the daemon run yet?)", path.display()))?,
+    )?;
+    let (Some(url), Some(id)) = (doc["url"].as_str(), doc["id"].as_str()) else {
+        bail!("{} is malformed", path.display());
+    };
+    let qr = label::Matrix::encode(url)?;
+    println!(
+        "\n{}  Teton device {}\n  {url}\n",
+        qr.to_terminal(),
+        format_id(id)
+    );
+    Ok(())
 }
 
 /// SIGUSR1 opens a re-provisioning window; SIGINT/SIGTERM stop the daemon.

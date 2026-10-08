@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#0f766e">
+  <title>Teton Setup</title>
+  <meta name="description" content="Set up Wi-Fi on Teton devices over Bluetooth.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <header class="bar">
+    <img src="icons/icon.svg" alt="" width="28" height="28">
+    <span class="bar-title">Teton Setup</span>
+    <button type="button" class="bar-link" id="history-btn" hidden>Done today: <span id="history-count">0</span></button>
+  </header>
+
+  <main>
+    <!-- Home -->
+    <section data-screen="home">
+      <h1>Set up a Teton device</h1>
+      <p class="lead">Scan the QR label on the device to connect it to Wi-Fi.</p>
+      <button type="button" class="primary big" id="scan-btn">Scan device label</button>
+      <p class="hint">Or point your phone's camera app at the label.</p>
+      <div class="notice warn" id="compat-warning" hidden></div>
+      <div class="notice" id="install-hint" hidden>
+        <p>Install this app so it works without internet on site.</p>
+        <button type="button" class="secondary" id="install-btn">Install app</button>
+      </div>
+    </section>
+
+    <!-- Camera -->
+    <section data-screen="scan" hidden>
+      <h2>Scan the device label</h2>
+      <div class="viewfinder"><video id="scan-video" playsinline muted></video><div class="frame"></div></div>
+      <p class="hint">Hold the QR code inside the square.</p>
+      <button type="button" class="secondary" id="scan-cancel">Cancel</button>
+    </section>
+
+    <!-- Device: connect and verify -->
+    <section data-screen="device" hidden>
+      <p class="eyebrow">Teton device</p>
+      <h2 class="mono" id="device-id"></h2>
+      <p id="device-msg">Press Connect, then pick this device in the list that appears.</p>
+      <ol class="steps" id="verify-steps" hidden>
+        <li data-step="connect">Connecting over Bluetooth</li>
+        <li data-step="verify">Verifying the device</li>
+      </ol>
+      <button type="button" class="primary big" id="connect-btn">Connect</button>
+      <button type="button" class="text" data-action="home">Cancel</button>
+    </section>
+
+    <!-- Networks -->
+    <section data-screen="networks" hidden>
+      <p class="eyebrow verified">Device verified</p>
+      <h2>Choose the Wi-Fi network</h2>
+      <button type="button" class="primary big" id="reuse-btn" hidden></button>
+      <p class="hint" id="networks-hint">Networks the device can see:</p>
+      <p class="loading" id="networks-loading">Looking for networks…</p>
+      <ul class="networks" id="network-list"></ul>
+      <div class="row">
+        <button type="button" class="secondary" id="other-btn">Other network…</button>
+        <button type="button" class="secondary" id="rescan-btn">Rescan</button>
+      </div>
+    </section>
+
+    <!-- Password -->
+    <section data-screen="password" hidden>
+      <p class="eyebrow">Wi-Fi network</p>
+      <h2 id="pw-title"></h2>
+      <form id="pw-form" novalidate autocomplete="off">
+        <div id="hidden-fields" hidden>
+          <label for="ssid-input">Network name (SSID)</label>
+          <input id="ssid-input" maxlength="32" autocapitalize="off" spellcheck="false">
+          <label for="sec-input">Security</label>
+          <select id="sec-input">
+            <option value="wpa2">WPA2 / WPA3 Personal</option>
+            <option value="wpa3">WPA3 Personal only</option>
+            <option value="open">None (open)</option>
+          </select>
+        </div>
+        <div id="psk-field">
+          <label for="psk-input">Password</label>
+          <div class="pw-row">
+            <input id="psk-input" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go">
+            <button type="button" class="secondary" id="psk-toggle" aria-pressed="false">Show</button>
+          </div>
+        </div>
+        <p class="error" id="pw-error" role="alert"></p>
+        <button type="submit" class="primary big">Connect device</button>
+      </form>
+      <button type="button" class="text" data-action="networks">Choose another network</button>
+    </section>
+
+    <!-- Join progress -->
+    <section data-screen="progress" hidden>
+      <h2>Connecting the device…</h2>
+      <ol class="steps" id="join-steps">
+        <li data-step="accepted">Credentials sent securely</li>
+        <li data-step="associating">Joining <span class="ssid"></span></li>
+        <li data-step="ip">Getting an address</li>
+        <li data-step="done">Checking the connection</li>
+      </ol>
+      <p class="hint">This usually takes 5–15 seconds. Keep the phone near the device.</p>
+    </section>
+
+    <!-- Result -->
+    <section data-screen="result" hidden>
+      <div class="result-icon" id="result-icon" aria-hidden="true"></div>
+      <h2 id="result-title"></h2>
+      <p id="result-detail"></p>
+      <p class="code" id="result-code"></p>
+      <div id="success-actions" hidden>
+        <label for="room-input">Room or location (optional)</label>
+        <input id="room-input" maxlength="60" placeholder="e.g. Ward 4, room 12" enterkeyhint="done">
+        <button type="button" class="primary big" id="next-btn">Save &amp; set up next device</button>
+        <button type="button" class="secondary" id="done-btn">Save &amp; finish</button>
+      </div>
+      <div id="failure-actions" hidden>
+        <button type="button" class="primary big" id="retry-btn">Try again</button>
+        <button type="button" class="secondary" data-action="networks">Choose another network</button>
+        <button type="button" class="text" data-action="abandon">Skip this device</button>
+      </div>
+    </section>
+
+    <!-- Problem (connection-level) -->
+    <section data-screen="problem" hidden>
+      <div class="result-icon fail" aria-hidden="true"></div>
+      <h2 id="problem-title">Something went wrong</h2>
+      <p id="problem-detail"></p>
+      <p class="code" id="problem-code"></p>
+      <button type="button" class="primary big" id="problem-retry">Try again</button>
+      <button type="button" class="text" data-action="abandon">Back to start</button>
+    </section>
+
+    <!-- History -->
+    <section data-screen="history" hidden>
+      <h2>Devices done today</h2>
+      <p class="hint" id="history-empty">Nothing yet.</p>
+      <ul class="history" id="history-list"></ul>
+      <div class="row">
+        <button type="button" class="primary" id="export-btn">Export CSV</button>
+        <button type="button" class="secondary" id="clear-btn">Clear list</button>
+      </div>
+      <button type="button" class="text" data-action="home">Back</button>
+    </section>
+  </main>
+</body>
+</html>

@@ -3,6 +3,7 @@
 pub mod ble;
 pub mod device;
 pub mod identity;
+pub mod label;
 pub mod lockout;
 pub mod session;
 pub mod wifi;
