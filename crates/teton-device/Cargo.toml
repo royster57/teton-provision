@@ -5,6 +5,27 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 
+[package.metadata.deb]
+name = "teton-provisiond"
+maintainer = "Roy Ben Abraham <24923149+royster57@users.noreply.github.com>"
+copyright = "2026, Roy Ben Abraham"
+license-file = ["../../LICENSE", "0"]
+extended-description = """\
+Provisions Wi-Fi credentials onto a headless Linux device over Bluetooth Low \
+Energy. A phone scans the device's QR label, verifies the device with an \
+ECDH key exchange, and sends credentials encrypted with AES-256-GCM. The \
+daemon runs as an unprivileged user and joins the network through \
+NetworkManager."""
+section = "net"
+priority = "optional"
+depends = "$auto, bluez (>= 5.72-0ubuntu5.6), network-manager (>= 1.40), adduser"
+assets = [
+    ["target/release/teton-device", "usr/bin/", "755"],
+    ["../../packaging/50-teton-provision.rules", "usr/share/polkit-1/rules.d/", "644"],
+]
+maintainer-scripts = "../../packaging/debian/"
+systemd-units = { unit-name = "teton-provisiond", unit-scripts = "../../packaging/", enable = true, start = true }
+
 [dependencies]
 teton-proto.workspace = true
 

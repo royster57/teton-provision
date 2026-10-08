@@ -1,0 +1,10 @@
+#!/bin/sh
+set -e
+
+#DEBHELPER#
+
+if [ "$1" = "purge" ]; then
+    # Purge removes the device identity (key and label) as well.
+    rm -rf /var/lib/teton-provision
+    deluser --system teton-prov > /dev/null 2>&1 || true
+fi

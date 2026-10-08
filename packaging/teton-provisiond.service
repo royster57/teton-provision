@@ -1,0 +1,55 @@
+[Unit]
+Description=Teton Wi-Fi provisioning over BLE
+Documentation=https://github.com/royster57/teton-provision
+After=bluetooth.service NetworkManager.service
+Wants=bluetooth.service NetworkManager.service
+
+[Service]
+Type=exec
+User=teton-prov
+Group=teton-prov
+ExecStart=/usr/bin/teton-device run
+Environment=RUST_LOG=info
+Restart=on-failure
+RestartSec=5
+
+# Device key and label live here; the key file itself is 0600.
+StateDirectory=teton-provision
+StateDirectoryMode=0755
+UMask=0022
+
+# Least privilege: the daemon parses data from anyone in radio range, so it
+# gets no capabilities, a read-only system, and only Unix sockets (D-Bus to
+# BlueZ and NetworkManager). Permissions on NetworkManager come from the
+# polkit rule in /usr/share/polkit-1/rules.d/50-teton-provision.rules.
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectProc=invisible
+ProcSubset=pid
+ProtectClock=yes
+ProtectHostname=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX
+# NetworkManager does the networking; the daemon itself needs none.
+PrivateNetwork=yes
+IPAddressDeny=any
+RemoveIPC=yes
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+MemoryDenyWriteExecute=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources
+
+[Install]
+WantedBy=multi-user.target

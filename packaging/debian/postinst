@@ -1,0 +1,13 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = "configure" ]; then
+    # The service runs as this user (see teton-provisiond.service); it must
+    # exist before the unit is started below.
+    if ! getent passwd teton-prov > /dev/null; then
+        adduser --system --group --no-create-home --home /nonexistent \
+            --shell /usr/sbin/nologin --gecos "Teton provisioning daemon" teton-prov
+    fi
+fi
+
+#DEBHELPER#

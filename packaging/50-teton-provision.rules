@@ -1,0 +1,14 @@
+// Lets the Teton provisioning daemon (system user teton-prov, no login
+// session) manage Wi-Fi through NetworkManager, and nothing else.
+polkit.addRule(function (action, subject) {
+    if (subject.user !== "teton-prov") {
+        return polkit.Result.NOT_HANDLED;
+    }
+    switch (action.id) {
+    case "org.freedesktop.NetworkManager.settings.modify.system": // add/update/delete its profile
+    case "org.freedesktop.NetworkManager.network-control":        // (de)activate, connectivity check
+    case "org.freedesktop.NetworkManager.wifi.scan":              // scan for the phone's network list
+        return polkit.Result.YES;
+    }
+    return polkit.Result.NOT_HANDLED;
+});

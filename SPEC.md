@@ -66,7 +66,6 @@ teton-provision/
 ├── packaging/
 │   ├── teton-provisiond.service
 │   ├── 50-teton-provision.rules  (polkit)
-│   ├── teton-provision.conf      (D-Bus system policy)
 │   └── debian/ postinst postrm
 ├── scripts/  demo-prep  demo-restore  demo-run.sh  verify-capture
 ├── tests/    test-vectors.json  crypto.test.mjs  framing.test.mjs  label.test.mjs
@@ -412,62 +411,43 @@ otherwise `open`.
 
 ### 9.2 systemd unit (`teton-provisiond.service`)
 
-```ini
-[Unit]
-Description=Teton Wi-Fi provisioning over BLE
-After=bluetooth.service NetworkManager.service
-Wants=bluetooth.service
+The unit is `packaging/teton-provisiond.service`. It runs `/usr/bin/teton-device run`
+as `teton-prov` with `StateDirectory=teton-provision` (0755; the key file is 0600), no
+capabilities, `ProtectSystem=strict`, `RestrictAddressFamilies=AF_UNIX`,
+`PrivateNetwork=yes` + `IPAddressDeny=any` (only `lo` in its namespace: the daemon talks
+to BlueZ and NetworkManager over the D-Bus filesystem socket, and NetworkManager does
+the networking), `MemoryDenyWriteExecute`, and `SystemCallFilter=@system-service`
+minus `@privileged @resources`. `systemd-analyze security` rates it **0.4 SAFE**
+(verified in M7; the remaining items are `UMask`, kept so labels stay world-readable,
+and `PrivateUsers`, left off so polkit sees the real UID).
 
-[Service]
-User=teton-prov
-ExecStart=/usr/bin/teton-device run
-StateDirectory=teton-provision
-StateDirectoryMode=0755
-Restart=on-failure
-NoNewPrivileges=yes
-CapabilityBoundingSet=
-ProtectSystem=strict
-ProtectHome=yes
-PrivateTmp=yes
-PrivateDevices=yes
-ProtectKernelTunables=yes
-ProtectKernelModules=yes
-ProtectControlGroups=yes
-RestrictAddressFamilies=AF_UNIX
-RestrictNamespaces=yes
-MemoryDenyWriteExecute=yes
-LockPersonality=yes
-SystemCallFilter=@system-service
-SystemCallArchitectures=native
-
-[Install]
-WantedBy=multi-user.target
-```
-
-`systemd-analyze security teton-provisiond` output goes into the evidence.
-
-### 9.3 polkit (`/etc/polkit-1/rules.d/50-teton-provision.rules`)
+### 9.3 polkit (`/usr/share/polkit-1/rules.d/50-teton-provision.rules`)
 
 Allow `teton-prov` exactly these actions:
 `org.freedesktop.NetworkManager.settings.modify.system`,
 `org.freedesktop.NetworkManager.network-control`,
 `org.freedesktop.NetworkManager.wifi.scan`.
-*Confirm in M2 which action `CheckConnectivity` needs.*
+Verified in M7 with `sudo -u teton-prov nmcli general permissions` (all `yes`) and
+`nmcli networking connectivity check` as that user (`CheckConnectivity` is covered by
+`network-control`).
 
-### 9.4 D-Bus policy (`/etc/dbus-1/system.d/teton-provision.conf`)
+### 9.4 D-Bus policy: not needed
 
-Allow user `teton-prov` to send to `org.bluez` (GattManager1, LEAdvertisingManager1,
-Device1, Adapter1) and to receive the BlueZ callbacks into our exported objects.
+BlueZ's own policy (`/etc/dbus-1/system.d/bluetooth.conf`) already lets any user send
+to `org.bluez`, and `bluetoothd` runs as root, so it can call back into the daemon's
+exported GATT and advertisement objects. Nothing to install.
 
 ### 9.5 `.deb` (cargo-deb)
 
-Contents: `/usr/bin/teton-device`, the unit, the polkit rule, the D-Bus policy.
-`postinst`: create system user `teton-prov` (no login), `daemon-reload`, enable and
-start. `postrm purge`: remove the user and `/var/lib/teton-provision`. Runtime
-dependencies: `bluez (>= 5.72-0ubuntu5.6)`, `network-manager (>= 1.40)`.
+Contents: `/usr/bin/teton-device`, the unit, the polkit rule. `postinst`: create the
+system user `teton-prov` (no login) **before** the unit is enabled and started.
+`postrm purge`: remove the user and `/var/lib/teton-provision` (including the device
+identity). Runtime dependencies: `bluez (>= 5.72-0ubuntu5.6)`,
+`network-manager (>= 1.40)`, `adduser`.
 Earlier Ubuntu 24.04 `bluez` builds send a malformed *Add Ext Adv Data* command that
 current noble kernels reject, so no advertisement can be registered (LP: #2164626,
-found in M3).
+found in M3). `release.yml` builds the package on `v*` tags and attaches it to the
+GitHub Release.
 Build dependencies (from source): `libdbus-1-dev pkg-config cmake gcc`.
 
 ---

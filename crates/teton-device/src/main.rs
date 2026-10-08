@@ -9,8 +9,8 @@ use anyhow::{Result, bail};
 use clap::{Parser, Subcommand, ValueEnum};
 use teton_device::ble::Peripheral;
 use teton_device::device::{Control, Device, Timers};
-use teton_device::wifi::nm::NmWifi;
 use teton_device::wifi::sim::{self, SimWifi};
+use teton_device::wifi::{self, nm::NmWifi};
 use teton_device::{identity, label};
 use teton_proto::label::format_id;
 use tokio::sync::mpsc::{UnboundedSender, unbounded_channel};
@@ -97,8 +97,11 @@ fn main() -> Result<()> {
     match cli.command {
         Command::Run(args) => tokio::runtime::Runtime::new()?.block_on(run(args)),
         Command::Label { state_dir } => print_label(&state_dir),
-        Command::Reset { .. } => bail!("`reset` is not implemented yet"),
-        Command::Reprovision => bail!("`reprovision` is not implemented yet"),
+        Command::Reset {
+            new_identity,
+            state_dir,
+        } => tokio::runtime::Runtime::new()?.block_on(reset(&state_dir, new_identity)),
+        Command::Reprovision => reprovision(),
     }
 }
 
@@ -192,6 +195,109 @@ fn print_label(state_dir: &std::path::Path) -> Result<()> {
         qr.to_terminal(),
         format_id(id)
     );
+    Ok(())
+}
+
+const SERVICE: &str = "teton-provisiond.service";
+
+fn service_active() -> bool {
+    std::process::Command::new("systemctl")
+        .args(["is-active", "--quiet", SERVICE])
+        .status()
+        .is_ok_and(|s| s.success())
+}
+
+/// Forgets the provisioned network. A running daemon notices on its next
+/// status poll (within 5 s) and starts advertising; no restart needed.
+async fn reset(state_dir: &std::path::Path, new_identity: bool) -> Result<()> {
+    let wifi = NmWifi::connect(None, Duration::from_secs(30)).await?;
+    let mut deleted = 0;
+    for id in [wifi::PROFILE_ID, wifi::CANDIDATE_ID] {
+        for path in wifi.profiles_named(id).await? {
+            wifi.delete_profile(&path)
+                .await
+                .map_err(|e| anyhow::anyhow!("deleting {id}: {e:#} (try with sudo)"))?;
+            deleted += 1;
+        }
+    }
+    println!("Deleted {deleted} provisioned Wi-Fi profile(s); the device is unprovisioned.");
+    if new_identity {
+        for f in [
+            identity::KEY_FILE,
+            identity::LABEL_FILE,
+            "label.png",
+            "label.svg",
+        ] {
+            match std::fs::remove_file(state_dir.join(f)) {
+                Ok(()) => {}
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+                Err(e) => bail!(
+                    "removing {}: {e} (try with sudo)",
+                    state_dir.join(f).display()
+                ),
+            }
+        }
+        println!("Device identity deleted: the old label no longer works.");
+        if service_active() {
+            let ok = std::process::Command::new("systemctl")
+                .args(["restart", SERVICE])
+                .status()?
+                .success();
+            if !ok {
+                bail!("could not restart {SERVICE}");
+            }
+            println!(
+                "Restarted {SERVICE} with a new identity; print it with `teton-device label`."
+            );
+        } else {
+            println!("A new identity is created when the daemon next starts.");
+        }
+    }
+    Ok(())
+}
+
+/// Opens the manual re-provisioning window by sending SIGUSR1 to the daemon:
+/// the systemd service if it is running, otherwise a foreground `run`.
+fn reprovision() -> Result<()> {
+    let signal = |args: &[&str]| -> Result<()> {
+        let ok = std::process::Command::new(args[0])
+            .args(&args[1..])
+            .status()?
+            .success();
+        if !ok {
+            bail!("`{}` failed (try with sudo)", args.join(" "));
+        }
+        Ok(())
+    };
+    if service_active() {
+        signal(&[
+            "systemctl",
+            "kill",
+            "--kill-whom=main",
+            "--signal=SIGUSR1",
+            SERVICE,
+        ])?;
+    } else {
+        let me = std::process::id().to_string();
+        let mut found = false;
+        for entry in std::fs::read_dir("/proc")?.flatten() {
+            let pid = entry.file_name().to_string_lossy().into_owned();
+            let Ok(cmdline) = std::fs::read(entry.path().join("cmdline")) else {
+                continue;
+            };
+            let args: Vec<&[u8]> = cmdline.split(|b| *b == 0).collect();
+            let is_daemon = args.first().is_some_and(|a| a.ends_with(b"teton-device"))
+                && args.get(1) == Some(&b"run".as_slice());
+            if is_daemon && pid != me {
+                signal(&["kill", "-USR1", &pid])?;
+                found = true;
+            }
+        }
+        if !found {
+            bail!("no running teton-device daemon found");
+        }
+    }
+    println!("Re-provisioning window opened: the device advertises for the next 10 minutes.");
     Ok(())
 }
 
