@@ -262,7 +262,8 @@ On `status: failed`, the session stays `OPEN` and the phone may send `scan` or `
 | `timeout` | 30 s without `ACTIVATED`, no specific reason | **yes** | "Couldn't connect to "X". Move closer or try again." |
 | `internal` | anything else | no | "Something went wrong on the device. Try again." |
 
-*Verify the exact reason numbers against `nm-dbus-interface.h` for NM 1.46 during M2.*
+Reason numbers verified against `nm-dbus-interface.h` (NM 1.46) in M2; `auth_failed` via
+`SUPPLICANT_DISCONNECT` (8) observed on hardware ~6 s after a wrong password.
 Each phone message also shows a short code (e.g. `E-AUTH`) that can be quoted to support.
 
 ### 6.4 Session rules
@@ -377,10 +378,18 @@ otherwise `open`.
 **Online tracking:** subscribe to the Wi-Fi device's `ActiveConnection` and state;
 `ONLINE` means the active connection's id is `teton-provisioned`.
 
-**Risk to check in M2:** on a wrong password NM asks secret agents for new secrets, and
-GNOME Shell may show a password dialog on the laptop. Mitigations in order: system
-profile with `psk-flags=0`; if that's not enough, the join timeout plus rollback still
-produce `auth_failed`/`timeout` on the phone. Document whichever happens.
+**Observed in M2 (NM 1.46, Ubuntu 24.04):**
+- *Every* activation passes `CONFIG → NEED_AUTH (reason 0) → PREPARE` while NM loads the
+  stored secrets, including for the user's own profiles. This is not a failure.
+- A rejected password shows as `4way_handshake → disconnected`, then `NEED_AUTH` with
+  reason `SUPPLICANT_DISCONNECT` (8). The device cancels the activation at that point
+  (about 10 ms later), before NM asks a secret agent, so **no GNOME password dialog
+  appears**. The state handling is the pure `JoinTracker`, with the recorded sequences as
+  regression tests.
+- On Ubuntu 24.04, NM saves system profiles **through netplan**: the profile is written to
+  `/etc/netplan/90-NM-<uuid>.yaml` (root, 0600), and NM loads it from
+  `/run/NetworkManager/system-connections/netplan-NM-<uuid>-<ssid>.nmconnection`.
+  Deleting the profile through NM's D-Bus API removes both.
 
 ---
 
