@@ -96,7 +96,7 @@ Matter's setup code.
 
 **States.**
 - **Unprovisioned:** advertises.
-- **Provisioned:** quiet.
+- **Provisioned:** quiet, no advertising (§6 explains why this would change at scale).
 - **Recovery:** offline for more than 10 minutes, for example after the hospital changed its Wi-Fi password. It advertises while NetworkManager keeps retrying the old network.
 - **Manual window:** `teton-device reprovision`, standing in for a hardware button.
 - One session at a time. Advertising pauses during a session, and a second phone that writes is disconnected.
@@ -148,7 +148,6 @@ Three bugs only showed up on real hardware. Each one is fixed and, where a test 
 
 Some of this is already built in:
 - The QR identifies one exact device, so Chrome's picker shows exactly one entry even with 199 others nearby.
-- Provisioned devices stop advertising, so the room gets quieter as the work progresses.
 - The device-wide lockout, plain-language errors and recovery mode all apply.
 - "Use 'roy' again" reuses the network for the next device without retyping.
 - "Done today" records device, time, network, result and room, and exports CSV.
@@ -158,15 +157,17 @@ What would change:
 1. **Technicians shouldn't type, or even know, the hospital Wi-Fi password.** Smith already knows every device's public key from the factory. It can encrypt the network settings separately for each device **ahead of time**, and the app carries those sealed blobs without being able to read them, so a lost phone leaks nothing. The cost: a blob prepared in advance can't include the per-connection nonce, so replay protection moves to an expiry time and counter signed by Smith. The live session encryption still wraps the blob.
 2. **One credential per device, not one shared by all 200.** Ideally **EAP-TLS with a certificate per device issued through Smith**, or per-device passwords (Cisco iPSK, Aruba MPSK). One device can then be revoked without changing the password on 199 others. Add an IoT VLAN, MAC registration and a firewall rule that allows only Smith.
 3. **The deployment record is what facilities actually needs:** device → room. The app records the room for each device and syncs the list to Smith when it's back online. On first contact, each device authenticates to Smith with its key, and Smith checks it against the expected shipment and flags strays.
-4. **A preloaded list of the site's devices** lets the app reject devices from the wrong shipment, and covers damaged labels: type the serial, and the app looks up the public key.
-5. **Changing the Wi-Fi password without a site visit.** Smith sends the new settings to every online device *before* IT switches over, and devices keep the old settings as a fallback. Recovery mode becomes a rare safety net, not the normal way to handle a password change.
-6. **Distribution.** A native app on MDM-managed phones: works on iPhones, and allows managed updates and certificate pinning to Smith.
-7. **Remove the hallway step where possible.** Pre-configure devices at the warehouse with the site's settings, so on site the job is "mount and plug in". The BLE flow stays as the repair and exception tool. The best scalable provisioning flow is the one 95 % of devices never need.
-8. **Radio and concurrency.** Several technicians can work in parallel; the one-session-per-device rule prevents collisions. 200 BLE advertisers are well within BLE's capacity, but a device that has waited a long time should advertise less often. Hospital IT and clinical engineering would need to approve BLE use.
+4. **Scanning any label should tell the technician in seconds whether the device is already set up.** Today a provisioned device stops advertising, so scanning its label makes Chrome's device list search for about a minute (a fixed Chrome scan the page can't shorten) before *Device not found*. Walking a ward of 200 devices, technicians would hit that constantly. Instead, provisioned devices would keep advertising slowly (every 1–2 s) and answer `hello` with a plaintext "already provisioned" reply, so within a couple of seconds the app shows *"This device is already set up. To change its network, press its setup button."* No key exchange or join happens until the setup window is opened, and the reply reveals only "already set up", not the network or whether it's online. The cost is that the device stays reachable over BLE, but the only thing exposed is parsing one `hello`. Staying silent buys little anyway: the app filters Chrome's picker by the label's exact device name, so finished devices never clutter it.
+5. **A preloaded list of the site's devices** lets the app reject devices from the wrong shipment, and covers damaged labels: type the serial, and the app looks up the public key.
+6. **Changing the Wi-Fi password without a site visit.** Smith sends the new settings to every online device *before* IT switches over, and devices keep the old settings as a fallback. Recovery mode becomes a rare safety net, not the normal way to handle a password change.
+7. **Distribution.** A native app on MDM-managed phones: works on iPhones, and allows managed updates and certificate pinning to Smith.
+8. **Remove the hallway step where possible.** Pre-configure devices at the warehouse with the site's settings, so on site the job is "mount and plug in". The BLE flow stays as the repair and exception tool. The best scalable provisioning flow is the one 95 % of devices never need.
+9. **Radio and concurrency.** Several technicians can work in parallel; the one-session-per-device rule prevents collisions. 200 BLE advertisers are well within BLE's capacity, but a device that has waited a long time should advertise less often. Hospital IT and clinical engineering would need to approve BLE use.
 
 ## 7. Limitations and next steps
 
 - **WPA2/WPA3-Enterprise isn't implemented**, though most hospitals use it. I couldn't test it, and I didn't want to ship untested code. The message format has a `security` field and a version number for it (see §6.2).
+- A provisioned device is silent over BLE. Scanning its label makes Chrome's device list search for about a minute before *Device not found*, unless the technician closes it sooner (the app tells them to after about 15 s). §6 point 4 describes the fix.
 - The join lockout lives in memory. Rebooting the device to clear it takes about as long as the lockout itself, so this was deliberate.
 - SSIDs that aren't valid UTF-8 are displayed lossily.
 - Next: `cargo-fuzz` on the chunk reassembler and message parser (currently covered by proptest), the device key in a TPM, and a Smith reachability check instead of NetworkManager's generic one.
