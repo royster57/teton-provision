@@ -3,7 +3,8 @@
 #   - remembers which saved Wi-Fi profiles autoconnect, and turns that off
 #   - deletes earlier teton-provisioned profiles
 #   - disconnects Wi-Fi
-# Nothing of yours is deleted; scripts/demo-restore undoes it.
+# Nothing of yours is deleted; scripts/demo-restore undoes it. Safe to re-run:
+# an interrupted run resumes, adding to the same restore list.
 # Usage: scripts/demo-prep [--dry-run]
 set -euo pipefail
 
@@ -13,32 +14,38 @@ run() { if $dry; then echo "would run: $*"; else "$@"; fi; }
 
 state="${XDG_STATE_HOME:-$HOME/.local/state}/teton-demo"
 saved="$state/autoconnect.txt"
-if [ -s "$saved" ] && ! $dry; then
-  echo "Already prepared: $saved exists. Run scripts/demo-restore first." >&2
-  exit 1
-fi
 iface=$(nmcli -t -f DEVICE,TYPE device | awk -F: '$2 == "wifi" { print $1; exit }')
 [ -n "$iface" ] || { echo "No Wi-Fi device found." >&2; exit 1; }
+$dry || mkdir -p "$state"
 
-$dry || { mkdir -p "$state"; : > "$saved"; }
-count=0
 # -t escapes ':' inside names as '\:'; NAME is last, so it may contain them.
-while IFS=: read -r uuid type auto name; do
-  [ "$type" = "802-11-wireless" ] || continue
+mapfile -t todo < <(nmcli -t -f UUID,TYPE,AUTOCONNECT,NAME connection show |
+  awk -F: '$2 == "802-11-wireless" && ($3 == "yes" || $4 ~ /^teton-provisioned/)')
+
+# Each change is written through netplan on Ubuntu 24.04 (about 1.5 s each).
+echo "Updating ${#todo[@]} Wi-Fi profiles; this takes about $(( (${#todo[@]} * 3 + 1) / 2 )) s..."
+n=0
+for line in "${todo[@]}"; do
+  IFS=: read -r uuid _ _ name <<< "$line"
+  n=$((n + 1))
   case "$name" in
     teton-provisioned*)
-      echo "deleting earlier profile: $name"
+      echo "[$n/${#todo[@]}] deleting earlier profile: $name"
       run nmcli connection delete "$uuid" > /dev/null
       ;;
     *)
-      [ "$auto" = "yes" ] || continue
+      echo "[$n/${#todo[@]}] autoconnect off: $name"
+      # Record before changing, so an interrupted run never loses a profile.
       $dry || echo "$uuid" >> "$saved"
       run nmcli connection modify "$uuid" connection.autoconnect no
-      count=$((count + 1))
       ;;
   esac
-done < <(nmcli -t -f UUID,TYPE,AUTOCONNECT,NAME connection show)
+done
 
-echo "autoconnect turned off for $count Wi-Fi profiles"
-run nmcli device disconnect "$iface"
-$dry && echo "(dry run: nothing changed)" || echo "Wi-Fi on $iface is disconnected. Undo with scripts/demo-restore."
+run nmcli device disconnect "$iface" > /dev/null
+if $dry; then
+  echo "(dry run: nothing changed)"
+else
+  echo "Done: Wi-Fi on $iface is disconnected and won't reconnect by itself."
+  echo "Undo with scripts/demo-restore."
+fi
