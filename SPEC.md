@@ -1,6 +1,6 @@
 # teton-provision — Specification
 
-Status: **draft for review** · 2026-10-08
+Status: **implemented in v0.1.0** · 2026-10-08. Sections note where hardware testing changed the original plan.
 
 Provision a "Teton Device" (an Ubuntu 24.04 laptop) with Wi-Fi credentials from an
 Android phone over BLE, with no internet, no shared network, no plaintext credentials
