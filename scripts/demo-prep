@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# Turns this laptop into an unprovisioned Teton device for a demo (SPEC.md §12):
+#   - remembers which saved Wi-Fi profiles autoconnect, and turns that off
+#   - deletes earlier teton-provisioned profiles
+#   - disconnects Wi-Fi
+# Nothing of yours is deleted; scripts/demo-restore undoes it.
+# Usage: scripts/demo-prep [--dry-run]
+set -euo pipefail
+
+dry=false
+[ "${1:-}" = "--dry-run" ] && dry=true
+run() { if $dry; then echo "would run: $*"; else "$@"; fi; }
+
+state="${XDG_STATE_HOME:-$HOME/.local/state}/teton-demo"
+saved="$state/autoconnect.txt"
+if [ -s "$saved" ] && ! $dry; then
+  echo "Already prepared: $saved exists. Run scripts/demo-restore first." >&2
+  exit 1
+fi
+iface=$(nmcli -t -f DEVICE,TYPE device | awk -F: '$2 == "wifi" { print $1; exit }')
+[ -n "$iface" ] || { echo "No Wi-Fi device found." >&2; exit 1; }
+
+$dry || { mkdir -p "$state"; : > "$saved"; }
+count=0
+# -t escapes ':' inside names as '\:'; NAME is last, so it may contain them.
+while IFS=: read -r uuid type auto name; do
+  [ "$type" = "802-11-wireless" ] || continue
+  case "$name" in
+    teton-provisioned*)
+      echo "deleting earlier profile: $name"
+      run nmcli connection delete "$uuid" > /dev/null
+      ;;
+    *)
+      [ "$auto" = "yes" ] || continue
+      $dry || echo "$uuid" >> "$saved"
+      run nmcli connection modify "$uuid" connection.autoconnect no
+      count=$((count + 1))
+      ;;
+  esac
+done < <(nmcli -t -f UUID,TYPE,AUTOCONNECT,NAME connection show)
+
+echo "autoconnect turned off for $count Wi-Fi profiles"
+run nmcli device disconnect "$iface"
+$dry && echo "(dry run: nothing changed)" || echo "Wi-Fi on $iface is disconnected. Undo with scripts/demo-restore."

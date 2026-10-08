@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Undoes scripts/demo-prep: turns autoconnect back on for exactly the Wi-Fi
+# profiles it turned off. The teton-provisioned profile is left alone; remove
+# it with `sudo teton-device reset` (or `nmcli connection delete teton-provisioned`).
+# Usage: scripts/demo-restore [--dry-run]
+set -euo pipefail
+
+dry=false
+[ "${1:-}" = "--dry-run" ] && dry=true
+run() { if $dry; then echo "would run: $*"; else "$@"; fi; }
+
+saved="${XDG_STATE_HOME:-$HOME/.local/state}/teton-demo/autoconnect.txt"
+if [ ! -f "$saved" ]; then
+  echo "Nothing to restore ($saved not found)."
+  exit 0
+fi
+restored=0
+missing=0
+while read -r uuid; do
+  [ -n "$uuid" ] || continue
+  if run nmcli connection modify "$uuid" connection.autoconnect yes 2> /dev/null; then
+    restored=$((restored + 1))
+  else
+    missing=$((missing + 1)) # profile deleted since; nothing to restore
+  fi
+done < "$saved"
+run rm -f "$saved"
+echo "autoconnect restored for $restored Wi-Fi profiles ($missing no longer exist)."
+$dry && echo "(dry run: nothing changed)" || echo "NetworkManager will reconnect to your usual network on its own."
