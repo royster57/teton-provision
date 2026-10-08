@@ -459,7 +459,10 @@ Device1, Adapter1) and to receive the BlueZ callbacks into our exported objects.
 Contents: `/usr/bin/teton-device`, the unit, the polkit rule, the D-Bus policy.
 `postinst`: create system user `teton-prov` (no login), `daemon-reload`, enable and
 start. `postrm purge`: remove the user and `/var/lib/teton-provision`. Runtime
-dependencies: `bluez (>= 5.64)`, `network-manager (>= 1.40)`.
+dependencies: `bluez (>= 5.72-0ubuntu5.6)`, `network-manager (>= 1.40)`.
+Earlier Ubuntu 24.04 `bluez` builds send a malformed *Add Ext Adv Data* command that
+current noble kernels reject, so no advertisement can be registered (LP: #2164626,
+found in M3).
 Build dependencies (from source): `libdbus-1-dev pkg-config cmake gcc`.
 
 ---
