@@ -171,10 +171,11 @@ def main():
     sealed = sum(1 for *_, m in messages if m["t"] == "sealed")
     print(f"   {len(messages)} messages, {sealed} sealed\n")
 
-    print("== Credential search (type each password used on the phone; empty line to finish)")
+    print("== Credential search: type each password used on the phone, wrong ones included")
     secrets = []
     while True:
-        s = getpass.getpass(f"   password #{len(secrets) + 1}: ")
+        hint = "" if not secrets else " (or Enter to finish)"
+        s = getpass.getpass(f"   password #{len(secrets) + 1}{hint}: ")
         if not s:
             break
         secrets.append(s.encode())
