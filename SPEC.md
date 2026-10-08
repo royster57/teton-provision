@@ -134,12 +134,13 @@ followed by the ID and the path to `label.png`. Readable by any user.
 Each GATT write or notification carries **one chunk**:
 
 ```
-byte 0     : bit 7 = FINAL, bits 0–6 = chunk index within the message (0–127)
+byte 0     : bit 7 = FINAL, bits 0–6 = chunk index within the message, mod 128
 bytes 1..  : payload
 ```
 
 - Message = concatenation of chunk payloads in index order up to the FINAL chunk.
-- Maximum message size **4096 bytes**. Chunk index must start at 0 and increase by 1.
+- Maximum message size **4096 bytes**. Chunk index must start at 0 and increase by 1,
+  wrapping 127 → 0 (with 20-byte chunks a 4096-byte message needs 216 chunks).
   Any violation causes a protocol error and the session ends.
 - Chunk size: the device uses `MTU − 3`. The phone uses 20 bytes until it receives
   `mtu` in the challenge, then `min(mtu − 3, 512)`.
