@@ -46,20 +46,13 @@ systemctl status teton-provisiond --no-pager    # should say "active (running)"
 
 ### The device label
 
-Each device has a QR label. It holds the device's ID and public key, which is how the phone
-knows it's talking to the real device. On production hardware the label is a sticker
-printed at the factory. On a test machine, the device shows its own label, in any of three
-ways:
+Each device has a QR label holding its ID and public key, which is how the phone knows it's
+talking to the real device. On production hardware it's a sticker printed at the factory;
+on a test machine, print it in the terminal:
 
 ```bash
-teton-device label                                  # 1. print the QR in this terminal (any user)
-xdg-open /var/lib/teton-provision/label.png         # 2. open it as an image
-xdg-open /var/lib/teton-provision/label.svg         # 3. a 50 mm printable sticker with the ID underneath
+teton-device label
 ```
-
-The terminal QR is about 30 lines tall, so make the window tall enough; it is drawn black on
-white, so dark terminal themes are fine. The label only changes with
-`teton-device reset --new-identity`.
 
 ### 2. Prepare the phone (once, while online)
 
