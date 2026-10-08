@@ -41,7 +41,7 @@ This creates the system user `teton-prov` and starts `teton-provisiond`. On firs
 generates the device's key and label, and starts advertising because it isn't provisioned yet.
 
 ```bash
-systemctl status teton-provisiond
+systemctl status teton-provisiond --no-pager    # should say "active (running)"
 ```
 
 ### The device label
@@ -78,7 +78,7 @@ Check on the device:
 
 ```bash
 nmcli connection show --active          # teton-provisioned is active
-journalctl -u teton-provisiond -e       # the session, with the password shown as <redacted len=N>
+journalctl -u teton-provisiond --no-pager -n 20   # the session; the password shows as <redacted len=N>
 ```
 
 To provision again, either open a 10-minute window, which stands in for a hardware button:
@@ -165,7 +165,7 @@ docs/                   ARCHITECTURE.md, evidence/
 
 | Symptom | Cause and fix |
 |---|---|
-| `Failed to register advertisement` / `Invalid Parameters (0x0d)` in `journalctl -u bluetooth` | Unpatched `bluez` on Ubuntu 24.04 sends a malformed command that current kernels reject (LP: #2164626). Upgrade to `5.72-0ubuntu5.6` or later, then `sudo systemctl restart bluetooth`. `sudo scripts/diag-advertising.sh` captures a trace if it persists. |
+| `Failed to register advertisement` / `Invalid Parameters (0x0d)` in `journalctl -u bluetooth --no-pager` | Unpatched `bluez` on Ubuntu 24.04 sends a malformed command that current kernels reject (LP: #2164626). Upgrade to `5.72-0ubuntu5.6` or later, then `sudo systemctl restart bluetooth`. `sudo scripts/diag-advertising.sh` captures a trace if it persists. |
 | The phone says *Device not found* | The device is already provisioned and stopped advertising (`sudo teton-device reprovision`), another phone is mid-session, or it's out of range. |
 | *Could not verify the device* | The label doesn't belong to this device (e.g. after `reset --new-identity`); print the current one with `teton-device label`. |
 | *Too many failed attempts* | Device-wide lockout after 3 wrong passwords: 30 s, then 60 s, then 120 s. Wait for the countdown. |
