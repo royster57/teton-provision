@@ -179,6 +179,61 @@ pub fn map_reason(reason: u32) -> FailReason {
     }
 }
 
+/// What one NM device state transition means for a join in progress.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Step {
+    Continue,
+    Associating,
+    Activated,
+    Failed(JoinFailure),
+}
+
+/// Follows the Wi-Fi device's state transitions for one activation. Pure, so
+/// sequences recorded on hardware can be replayed in tests.
+#[derive(Debug, Default)]
+pub struct JoinTracker {
+    /// Transitions before PREPARE belong to the connection being replaced.
+    ours: bool,
+    associating_sent: bool,
+    last_reason: u32,
+}
+
+impl JoinTracker {
+    pub fn last_reason(&self) -> u32 {
+        self.last_reason
+    }
+
+    pub fn step(&mut self, new_state: u32, reason: u32) -> Step {
+        if reason != 0 {
+            self.last_reason = reason;
+        }
+        let fail = |r: FailReason, what: &str| {
+            Step::Failed(JoinFailure::new(r, format!("{what} (reason {reason})")))
+        };
+        match new_state {
+            STATE_PREPARE => {
+                self.ours = true;
+                Step::Continue
+            }
+            _ if !self.ours => Step::Continue,
+            STATE_CONFIG if !self.associating_sent => {
+                self.associating_sent = true;
+                Step::Associating
+            }
+            // NM 1.46 enters NEED_AUTH with reason 0 on *every* activation while
+            // it loads the stored secrets, then restarts at PREPARE (observed in
+            // M2). Only a NEED_AUTH carrying a failure reason means the AP
+            // rejected the password; cancel then, before NM asks a desktop
+            // secret agent to prompt on the device's screen.
+            STATE_NEED_AUTH if reason != 0 => fail(FailReason::AuthFailed, "password rejected"),
+            STATE_ACTIVATED => Step::Activated,
+            STATE_FAILED => fail(map_reason(reason), "activation failed"),
+            STATE_DISCONNECTED | STATE_DEACTIVATING => fail(map_reason(reason), "disconnected"),
+            _ => Step::Continue,
+        }
+    }
+}
+
 pub fn map_connectivity(c: u32) -> Internet {
     match c {
         CONNECTIVITY_FULL => Internet::Full,
@@ -290,6 +345,58 @@ mod tests {
         assert_eq!(map_reason(9), FailReason::Internal);
         assert_eq!(map_connectivity(4), Internet::Full);
         assert_eq!(map_connectivity(0), Internet::Unknown);
+    }
+
+    fn replay(seq: &[(u32, u32)]) -> Vec<Step> {
+        let mut t = JoinTracker::default();
+        seq.iter()
+            .map(|&(s, r)| t.step(s, r))
+            .filter(|s| *s != Step::Continue)
+            .collect()
+    }
+
+    #[test]
+    fn tracker_follows_observed_successful_activation() {
+        // Recorded on NM 1.46 (M2), switching from "roy": deactivate, then
+        // CONFIG -> NEED_AUTH(0) -> PREPARE while stored secrets load.
+        let steps = replay(&[
+            (110, 60),
+            (30, 60),
+            (40, 0),
+            (50, 0),
+            (60, 0),
+            (40, 0),
+            (50, 0),
+            (70, 0),
+            (80, 0),
+            (90, 0),
+            (100, 0),
+        ]);
+        assert_eq!(steps, vec![Step::Associating, Step::Activated]);
+    }
+
+    #[test]
+    fn tracker_detects_rejected_password() {
+        let steps = replay(&[(40, 0), (50, 0), (60, 0), (40, 0), (50, 0), (60, 8)]);
+        assert_eq!(steps.len(), 2);
+        let Step::Failed(f) = &steps[1] else {
+            panic!("{steps:?}")
+        };
+        assert_eq!(f.reason, FailReason::AuthFailed);
+    }
+
+    #[test]
+    fn tracker_maps_failures_and_ignores_previous_connection() {
+        let steps = replay(&[(110, 60), (30, 60), (40, 0), (50, 0), (120, 53)]);
+        let Step::Failed(f) = &steps[1] else {
+            panic!("{steps:?}")
+        };
+        assert_eq!(f.reason, FailReason::SsidNotFound);
+        let steps = replay(&[(40, 0), (50, 0), (70, 0), (120, 17)]);
+        let Step::Failed(f) = &steps[1] else {
+            panic!("{steps:?}")
+        };
+        assert_eq!(f.reason, FailReason::DhcpFailed);
     }
 
     #[test]

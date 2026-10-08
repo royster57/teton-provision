@@ -14,8 +14,8 @@ use zbus::zvariant::{ObjectPath, OwnedObjectPath, OwnedValue, Value};
 
 use super::consts::*;
 use super::{
-    ApSecurity, CANDIDATE_ID, JoinFailure, Joined, PROFILE_ID, Progress, WifiBackend, classify,
-    dedupe, key_mgmt_for, map_connectivity, map_reason, validate,
+    ApSecurity, CANDIDATE_ID, JoinFailure, JoinTracker, Joined, PROFILE_ID, Progress, Step,
+    WifiBackend, classify, dedupe, key_mgmt_for, map_connectivity, validate,
 };
 
 const SCAN_WAIT: Duration = Duration::from_secs(8);
@@ -442,17 +442,16 @@ impl NmWifi {
             .map_err(internal)?;
         let deadline = Instant::now() + self.join_timeout;
 
-        let mut ours = false; // transitions before PREPARE belong to the previous connection
-        let mut configured = false;
-        let mut last_reason = 0;
+        let mut tracker = JoinTracker::default();
         let outcome = loop {
             let signal = match timeout_at(deadline, states.next()).await {
                 Err(_) => {
                     break Err(JoinFailure::new(
                         FailReason::Timeout,
                         format!(
-                            "no result within {:?} (last reason {last_reason})",
-                            self.join_timeout
+                            "no result within {:?} (last reason {})",
+                            self.join_timeout,
+                            tracker.last_reason()
                         ),
                     ));
                 }
@@ -465,30 +464,18 @@ impl NmWifi {
                 Ok(Some(s)) => s,
             };
             let Ok(args) = signal.args() else { continue };
-            let (new, old, reason) = (args.new_state, args.old_state, args.reason);
-            debug!(new, old, reason, "device state");
-            if reason != 0 {
-                last_reason = reason;
-            }
-            match new {
-                STATE_PREPARE => ours = true,
-                _ if !ours => {}
-                STATE_CONFIG => {
-                    if !configured {
-                        configured = true;
-                        let _ = progress.send(Progress::Associating);
-                    }
+            debug!(
+                new = args.new_state,
+                old = args.old_state,
+                reason = args.reason,
+                "device state"
+            );
+            match tracker.step(args.new_state, args.reason) {
+                Step::Continue => {}
+                Step::Associating => {
+                    let _ = progress.send(Progress::Associating);
                 }
-                // With the PSK stored in a system profile, NM only asks for
-                // secrets again after the handshake failed: a wrong password.
-                // Cancel now rather than wait for a desktop secret agent.
-                STATE_NEED_AUTH if configured => {
-                    break Err(JoinFailure::new(
-                        FailReason::AuthFailed,
-                        format!("handshake failed (reason {reason})"),
-                    ));
-                }
-                STATE_ACTIVATED => match self.ipv4_address().await {
+                Step::Activated => match self.ipv4_address().await {
                     Some(ip) => break Ok(ip),
                     None => {
                         break Err(JoinFailure::new(
@@ -497,19 +484,7 @@ impl NmWifi {
                         ));
                     }
                 },
-                STATE_FAILED => {
-                    break Err(JoinFailure::new(
-                        map_reason(reason),
-                        format!("NM failed (reason {reason})"),
-                    ));
-                }
-                STATE_DISCONNECTED | STATE_DEACTIVATING if configured => {
-                    break Err(JoinFailure::new(
-                        map_reason(reason),
-                        format!("disconnected (reason {reason})"),
-                    ));
-                }
-                _ => {}
+                Step::Failed(f) => break Err(f),
             }
         };
         match &outcome {
