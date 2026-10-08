@@ -57,9 +57,19 @@ teton-device label
 ### 2. Prepare the phone (once, while online)
 
 Open **https://royster57.github.io/teton-provision/** in Chrome and choose **⋮ → Install app**.
-From then on the app works offline; airplane mode with Bluetooth turned on is fine.
+From then on the app works offline.
 
-### 3. Provision
+### 3. Go offline (recommended)
+
+To see that provisioning needs no internet on either side:
+- **Phone:** turn on airplane mode, then turn Bluetooth back on.
+- **Device:** disconnect Wi-Fi (`nmcli device` shows the interface name, e.g. `wlp0s20f3`):
+  ```bash
+  nmcli device disconnect wlp0s20f3
+  ```
+  It won't reconnect by itself; provisioning connects it. Keep this README open on another screen.
+
+### 4. Provision
 
 1. Show the [device label](#the-device-label) and scan it with the phone's **camera app**, or
    press **Scan device label** in the app.
